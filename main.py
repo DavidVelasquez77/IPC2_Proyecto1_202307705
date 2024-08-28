@@ -9,6 +9,7 @@ import time
 from Nodo import Nodo
 from rich import print
 from colorama import init
+
 # Inicializar colorama
 init(autoreset=True)
 
@@ -75,106 +76,43 @@ class Menu:
 
         self.console.print("[yellow]Procesando el archivo XML...[/yellow]")
 
-        # Parsear el contenido XML
         try:
             root = ET.fromstring(self.archivo_contenido)
         except ET.ParseError:
             self.console.print("[red]Error al procesar el archivo XML. Asegúrate de que el archivo sea válido.[/red]")
             return
 
-        # Extraer las matrices del XML
         for matriz_element in root.findall('matriz'):
             nombre = matriz_element.get('nombre')
             n = int(matriz_element.get('n'))
             m = int(matriz_element.get('m'))
             datos = {}
 
-            # Extraer los valores de la matriz
             for dato_element in matriz_element.findall('dato'):
                 x = int(dato_element.get('x'))
                 y = int(dato_element.get('y'))
                 valor = int(dato_element.text)
                 datos[(x, y)] = valor
 
-            # Agregar la matriz original a la lista circular
             self.lista_matrices.agregar(nombre, n, m, datos)
             self.console.print(f"[green]Matriz '{nombre}' añadida a la lista circular.[/green]")
 
-            # Crear la matriz reducida basada en los valores de la matriz original
-            datos_reducidos = {}
-            for i in range(1, n + 1, 2):  # Agrupando de dos en dos filas
-                for j in range(1, m + 1):
-                    valor1 = datos.get((i, j), 0)
-                    valor2 = datos.get((i + 1, j), 0) if i + 1 <= n else 0
-                    nuevo_x = (i + 1) // 2  # Nuevo índice de fila en la matriz reducida
-                    if (nuevo_x, j) not in datos_reducidos:
-                        datos_reducidos[(nuevo_x, j)] = valor1 + valor2
-                    else:
-                        datos_reducidos[(nuevo_x, j)] += valor1 + valor2
+            datos_binarios = self.convertir_a_binario(datos)
+            nombre_binario = f"{nombre}_Binario"
+            self.lista_matrices.agregar(nombre_binario, n, m, datos_binarios)
+            self.console.print(f"[green]Matriz binaria '{nombre_binario}' generada y añadida a la lista circular.[/green]")
 
-            nombre_reducido = f"{nombre}_Salida"
-            self.lista_matrices.agregar(nombre_reducido, (n + 1) // 2, m, datos_reducidos)
-            self.console.print(f"[green]Matriz reducida '{nombre_reducido}' generada y añadida a la lista circular.[/green]")
+            # Mostrar las matrices
+            self.mostrar_matriz(nombre, datos)
+            self.mostrar_matriz(nombre_binario, datos_binarios)
 
-        # Mostrar todas las matrices (opcional)
-        self.lista_matrices.mostrar_todas()
-
-    def escribir_archivo_salida(self):
-        if self.lista_matrices.primero is None:
-            self.console.print("[red]No hay matrices procesadas para escribir en el archivo de salida.[/red]")
-            return
-
-        root = ET.Element("matrices")
-
-        actual = self.lista_matrices.primero
-        while True:
-            if actual.nombre.endswith('_Salida'):  # Procesar solo la matriz con sufijo '_Salida'
-                matriz_reducida = actual.datos  # Tomamos directamente la matriz reducida ya procesada
-                frecuencias = {}  # Almacenará las frecuencias
-
-                # Contar la frecuencia de cada valor en la matriz reducida
-                for valor in matriz_reducida.values():
-                    if valor not in frecuencias:
-                        frecuencias[valor] = 0
-                    frecuencias[valor] += 1
-
-                # Filtrar las frecuencias para mostrar solo las importantes (como en el ejemplo esperado)
-                frecuencias_importantes = {1: 2, 2: 2, 4: 1}
-
-                # Crear la etiqueta de la matriz en el XML
-                matriz_element = ET.SubElement(
-                    root, 
-                    "matriz", 
-                    nombre=actual.nombre, 
-                    n=str(actual.n),  # Aquí n ya es reducido
-                    m=str(actual.m),
-                    g=str(len(frecuencias_importantes))
-                )
-
-                # Agregar los datos de la matriz reducida al XML
-                for (x, y), valor in matriz_reducida.items():
-                    dato_element = ET.SubElement(matriz_element, "dato", x=str(x), y=str(y))
-                    dato_element.text = str(valor)
-
-                # Agregar las frecuencias filtradas al XML
-                for valor, frecuencia in frecuencias_importantes.items():
-                    frecuencia_element = ET.SubElement(matriz_element, "frecuencia", g=str(valor))
-                    frecuencia_element.text = str(frecuencia)
-
-            actual = actual.siguiente
-            if actual == self.lista_matrices.primero:
-                break
-
-        # Convertir el árbol XML en una cadena con formato bonito
-        xml_str = ET.tostring(root, encoding="utf-8")
-        pretty_xml_str = minidom.parseString(xml_str).toprettyxml(indent="  ")
-
-        # Escribir el XML a un archivo
-        with open("archivo_salida.xml", "w", encoding="utf-8") as archivo_salida:
-            archivo_salida.write(pretty_xml_str)
-
-        self.console.print("[green]Archivo de salida escrito exitosamente como 'archivo_salida.xml'.[/green]")
-
+    def convertir_a_binario(self, datos):
+        datos_binarios = {}
+        for (x, y), valor in datos.items():
+            valor_binario = 1 if valor > 0 else 0
+            datos_binarios[(x, y)] = valor_binario
+        return datos_binarios
+    
     def mostrar_datos_estudiante(self):
         # Define los datos del estudiante
         nombre = "Josue David Velasquez Ixchop"
@@ -198,70 +136,87 @@ class Menu:
         self.console.print(panel)
 
 
-def escribir_archivo_salida(self):
-    if self.lista_matrices.primero is None:
-        self.console.print("[red]No hay matrices procesadas para escribir en el archivo de salida.[/red]")
-        return
+    def escribir_archivo_salida(self):
+        if self.lista_matrices.primero is None:
+            self.console.print("[red]No hay matrices procesadas para escribir en el archivo de salida.[/red]")
+            return
 
-    root = ET.Element("matrices")
+        root = ET.Element("matrices")
+        actual = self.lista_matrices.primero
 
-    actual = self.lista_matrices.primero
-    while True:
-        if actual.nombre.endswith('_Salida'):  # Procesar solo la matriz con sufijo '_Salida'
-            matriz_reducida = {}  # Almacenará la matriz reducida
-            frecuencias = {}  # Almacenará las frecuencias
+        while True:
+            if actual.nombre.endswith('_Binario'):
+                matriz_original = self.lista_matrices.buscar(actual.nombre.replace('_Binario', ''))
+                patrones = {}
 
-            # Reducir la matriz agrupando filas de dos en dos y sumando los valores
-            for i in range(1, actual.n * 2, 2):  # Ajuste para manejar el rango de filas
-                for j in range(1, actual.m + 1):
-                    valor_1 = actual.obtener_dato(i, j)
-                    valor_2 = actual.obtener_dato(i + 1, j) if i + 1 <= actual.n * 2 else 0
-                    nuevo_valor = valor_1 + valor_2
+                for i in range(1, actual.n + 1):
+                    # Construir el patrón de acceso como una tupla
+                    patron = tuple(actual.obtener_dato(i, j) for j in range(1, actual.m + 1))
+                    
+                    if patron not in patrones:
+                        patrones[patron] = [i]
+                    else:
+                        patrones[patron].append(i)
 
-                    nuevo_x = (i + 1) // 2  # Nuevo índice de fila
-                    matriz_reducida[(nuevo_x, j)] = nuevo_valor
+                matriz_reducida = {}
+                for patron, filas in patrones.items():
+                    nueva_fila = len(matriz_reducida) + 1
+                    matriz_reducida[nueva_fila] = [0] * actual.m
+                    
+                    for fila in filas:
+                        for j in range(1, actual.m + 1):
+                            matriz_reducida[nueva_fila][j - 1] += matriz_original.obtener_dato(fila, j)
 
-                    # Contar la frecuencia de cada valor
-                    if nuevo_valor not in frecuencias:
-                        frecuencias[nuevo_valor] = 0
-                    frecuencias[nuevo_valor] += 1
+                # Agregar la matriz reducida al XML
+                matriz_element = ET.SubElement(
+                    root,
+                    "matriz",
+                    nombre=f"{matriz_original.nombre}_Salida",
+                    n=str(len(matriz_reducida)),
+                    m=str(actual.m),
+                    g=str(len(patrones))
+                )
 
-            # Crear la etiqueta de la matriz en el XML
-            matriz_element = ET.SubElement(
-                root, 
-                "matriz", 
-                nombre=actual.nombre, 
-                n=str(actual.n // 2 + (actual.n % 2)),  # Ajustar número de filas
-                m=str(actual.m),
-                g=str(len(frecuencias))
-            )
+                for i, fila_datos in matriz_reducida.items():
+                    for j, valor in enumerate(fila_datos, start=1):
+                        dato_element = ET.SubElement(matriz_element, "dato", x=str(i), y=str(j))
+                        dato_element.text = str(valor)
 
-            # Agregar los datos de la matriz reducida al XML
-            for (x, y), valor in matriz_reducida.items():
-                dato_element = ET.SubElement(matriz_element, "dato", x=str(x), y=str(y))
-                dato_element.text = str(valor)
+            actual = actual.siguiente
+            if actual == self.lista_matrices.primero:
+                break
 
-            # Agregar las frecuencias al XML
-            for valor, frecuencia in frecuencias.items():
-                frecuencia_element = ET.SubElement(matriz_element, "frecuencia", g=str(valor))
-                frecuencia_element.text = str(frecuencia)
+        xml_str = ET.tostring(root, encoding="utf-8")
+        pretty_xml_str = minidom.parseString(xml_str).toprettyxml(indent="  ")
 
-        actual = actual.siguiente
-        if actual == self.lista_matrices.primero:
-            break
+        with open("archivo_salida.xml", "w", encoding="utf-8") as archivo_salida:
+            archivo_salida.write(pretty_xml_str)
 
-    # Convertir el árbol XML en una cadena con formato bonito
-    xml_str = ET.tostring(root, encoding="utf-8")
-    pretty_xml_str = minidom.parseString(xml_str).toprettyxml(indent="  ")
+        self.console.print("[green]Archivo de salida escrito exitosamente como 'archivo_salida.xml'.[/green]")
 
-    # Escribir el XML a un archivo
-    with open("archivo_salida.xml", "w", encoding="utf-8") as archivo_salida:
-        archivo_salida.write(pretty_xml_str)
+    def mostrar_matriz(self, nombre, datos):
+        self.console.print(f"[yellow]Matriz '{nombre}':[/yellow]")
+        if not datos:
+            self.console.print("[red]No hay datos para mostrar en la matriz.[/red]")
+            return
 
-    self.console.print("[green]Archivo de salida escrito exitosamente como 'archivo_salida.xml'.[/green]")
+        # Determinar el rango de filas y columnas
+        max_x = max(x for x, y in datos.keys())
+        max_y = max(y for x, y in datos.keys())
 
+        # Crear una tabla para mostrar la matriz
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("Columna", style="cyan", justify="center")
+        for j in range(1, max_y + 1):
+            table.add_column(str(j), style="cyan", justify="center")
 
+        for i in range(1, max_x + 1):
+            row = [str(i)]
+            for j in range(1, max_y + 1):
+                row.append(str(datos.get((i, j), 0)))
+            table.add_row(*row)
 
+        self.console.print(table)
 
 # Main loop para ejecutar el menú
 if __name__ == "__main__":
