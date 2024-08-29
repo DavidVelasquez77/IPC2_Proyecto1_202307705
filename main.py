@@ -181,7 +181,11 @@ class Menu:
                     for j, valor in enumerate(fila_datos, start=1):
                         dato_element = ET.SubElement(matriz_element, "dato", x=str(i), y=str(j))
                         dato_element.text = str(valor)
-
+            # Agregar las frecuencias al XML
+                for g, filas in patrones.items():
+                    frecuencia_element = ET.SubElement(matriz_element, "frecuencia", g=str(len(filas)))
+                    frecuencia_element.text = str(len(filas))      
+                    
             actual = actual.siguiente
             if actual == self.lista_matrices.primero:
                 break
