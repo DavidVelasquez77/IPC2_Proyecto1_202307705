@@ -160,29 +160,40 @@ class Menu:
                 matriz_original = self.lista_matrices.buscar(actual.nombre.replace('_Binario', ''))
                 patrones = Mapa()
 
+                # Procesar cada fila de la matriz binaria
                 for i in range(1, actual.n + 1):
                     patron = Mapa()
                     for j in range(1, actual.m + 1):
                         valor = actual.obtener_dato(i, j)
-                        patron.agregar(j, valor)  # Agregar columnas como clave
+                        patron.agregar(Par(j, valor), valor)  # Agregar columnas y sus valores como clave
 
-                    fila_clave = Par(i, patron)  # Usar el índice de la fila y los valores como clave
+                    fila_clave = Par(i, patron)  # Usar el índice de la fila y el mapa de columnas como clave
 
                     if not patrones.contiene(fila_clave):
                         patrones.agregar(fila_clave, [i])
                     else:
-                        patrones.obtener(fila_clave).append(i)
+                        # Obtener la lista de filas existentes y agregar la nueva fila
+                        filas = patrones.obtener(fila_clave)
+                        filas.append(i)
+                        patrones.agregar(fila_clave, filas)
 
                 matriz_reducida = Mapa()
                 fila_nueva = 1
+
                 while True:
-                    patron_fila = patrones.obtener(fila_nueva, [])
+                    patron_fila = patrones.obtener(Par(fila_nueva, None), [])  # Obtener patrón de la fila actual
                     if not patron_fila:
                         break
-                    matriz_reducida.agregar(fila_nueva, [0] * actual.m)
+
+                    # Inicializar la fila en la matriz reducida
+                    fila_datos = [0] * actual.m
+                    matriz_reducida.agregar(fila_nueva, fila_datos)
+
                     for fila in patron_fila:
                         for j in range(1, actual.m + 1):
-                            matriz_reducida.obtener(fila_nueva)[j - 1] += matriz_original.obtener_dato(fila, j)
+                            valor = matriz_original.obtener_dato(fila, j)
+                            fila_datos[j - 1] += valor  # Acumular valores
+
                     fila_nueva += 1
 
                 matriz_element = ET.SubElement(
@@ -214,6 +225,8 @@ class Menu:
             archivo_salida.write(pretty_xml_str)
 
         self.console.print("[green]Archivo de salida escrito exitosamente como 'archivo_salida.xml'.[/green]")
+
+
 
 
 
