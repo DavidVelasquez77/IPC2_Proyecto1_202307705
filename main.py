@@ -162,47 +162,46 @@ class Menu:
 
                 # Procesar cada fila de la matriz binaria
                 for i in range(1, actual.n + 1):
-                    patron = Mapa()
+                    patron = Lista()  # Usar una lista para representar el patrón de la fila
                     for j in range(1, actual.m + 1):
-                        valor = actual.obtener_dato(i, j)
-                        patron.agregar(Par(j, valor), valor)  # Agregar columnas y sus valores como clave
+                            valor = actual.obtener_dato(i, j)
+                            patron.agregar(Par(j, valor), valor)  # Agregar el valor como parte del patrón
 
-                    fila_clave = Par(i, patron)  # Usar el índice de la fila y el mapa de columnas como clave
+                    # Verificar si el patrón ya existe
+                    patron_existente = False
+                    for k in range(1, patrones.tamano() + 1):
+                        patron_guardado = patrones.obtener(Par(k, None))
+                        if self.comparar_patrones(patron_guardado, patron):
+                            # Si el patrón ya existe, añadir la fila a este grupo
+                            patrones.obtener(Par(k, None)).append(i)
+                            patron_existente = True
+                            break
 
-                    if not patrones.contiene(fila_clave):
-                        patrones.agregar(fila_clave, [i])
-                    else:
-                        # Obtener la lista de filas existentes y agregar la nueva fila
-                        filas = patrones.obtener(fila_clave)
-                        filas.append(i)
-                        patrones.agregar(fila_clave, filas)
+                    if not patron_existente:
+                        # Si el patrón no existe, crear un nuevo grupo para este patrón
+                        patrones.agregar(Par(patrones.tamano() + 1, patron), [i])
 
                 matriz_reducida = Mapa()
                 fila_nueva = 1
 
-                while True:
-                    patron_fila = patrones.obtener(Par(fila_nueva, None), [])  # Obtener patrón de la fila actual
-                    if not patron_fila:
-                        break
-
-                    # Inicializar la fila en la matriz reducida
+                for k in range(1, patrones.tamano() + 1):
+                    filas_grupo = patrones.obtener(Par(k, None))
                     fila_datos = [0] * actual.m
-                    matriz_reducida.agregar(fila_nueva, fila_datos)
-
-                    for fila in patron_fila:
+                    for fila in filas_grupo:
                         for j in range(1, actual.m + 1):
                             valor = matriz_original.obtener_dato(fila, j)
                             fila_datos[j - 1] += valor  # Acumular valores
 
+                    matriz_reducida.agregar(fila_nueva, fila_datos)
                     fila_nueva += 1
 
                 matriz_element = ET.SubElement(
                     root,
                     "matriz",
                     nombre=f"{matriz_original.nombre}_Salida",
-                    n=str(len(matriz_reducida.items())),
+                    n=str(matriz_reducida.tamano()),
                     m=str(actual.m),
-                    g=str(len(patrones.items()))
+                    g=str(patrones.tamano())
                 )
 
                 for i, fila_datos in matriz_reducida.items():
@@ -210,9 +209,9 @@ class Menu:
                         dato_element = ET.SubElement(matriz_element, "dato", x=str(i), y=str(j + 1))
                         dato_element.text = str(valor)
 
-                for g, filas in patrones.items():
-                    frecuencia_element = ET.SubElement(matriz_element, "frecuencia", g=str(len(filas)))
-                    frecuencia_element.text = str(len(filas))
+                for k in range(1, patrones.tamano() + 1):
+                    frecuencia_element = ET.SubElement(matriz_element, "frecuencia", g=str(k))
+                    frecuencia_element.text = str(len(patrones.obtener(Par(k, None))))
 
             actual = actual.siguiente
             if actual == self.lista_matrices.primero:
@@ -225,6 +224,15 @@ class Menu:
             archivo_salida.write(pretty_xml_str)
 
         self.console.print("[green]Archivo de salida escrito exitosamente como 'archivo_salida.xml'.[/green]")
+
+
+    def comparar_patrones(self, patron1, patron2):
+        if patron1.tamano() != patron2.tamano():
+            return False
+        for i in range(1, patron1.tamano() + 1):
+            if patron1.obtener(Par(i, None)) != patron2.obtener(Par(i, None)):
+                return False
+        return True
 
 
 
