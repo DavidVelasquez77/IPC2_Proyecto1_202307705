@@ -10,63 +10,12 @@ from Nodo import Nodo
 from rich import print
 from colorama import init
 import graphviz
-
+from utils import Par 
+from utils import Mapa
+from utils import Lista
 # Inicializar colorama
 init(autoreset=True)
 
-# Clases personalizadas para reemplazar estructuras nativas
-class Par:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-
-    def __eq__(self, otro):
-        return self.x == otro.x and self.y == otro.y
-
-    def __hash__(self):
-        return hash((self.x, self.y))
-
-    def __repr__(self):
-        return f"({self.x}, {self.y})"
-
-class Mapa:
-    def __init__(self):
-        self._items = []
-
-    def agregar(self, clave, valor):
-        self._items.append((clave, valor))
-
-    def obtener(self, clave, valor_default=None):
-        for k, v in self._items:
-            if k == clave:
-                return v
-        return valor_default
-
-    def contiene(self, clave):
-        for k, v in self._items:
-            if k == clave:
-                return True
-        return False
-
-    def items(self):
-        return self._items
-
-
-class Lista:
-    def __init__(self):
-        self._items = []
-
-    def agregar(self, item):
-        self._items.append(item)
-
-    def obtener(self, index):
-        return self._items[index]
-
-    def __len__(self):
-        return len(self._items)
-
-    def items(self):
-        return self._items
 
 class Menu:
     def __init__(self):
@@ -212,24 +161,30 @@ class Menu:
                 patrones = Mapa()
 
                 for i in range(1, actual.n + 1):
-                    # Construir el patrón de acceso como una tupla
-                    patron = tuple(actual.obtener_dato(i, j) for j in range(1, actual.m + 1))
-                    
-                    if not patrones.contiene(patron):
-                        patrones.agregar(patron, [i])
+                    patron = Mapa()
+                    for j in range(1, actual.m + 1):
+                        valor = actual.obtener_dato(i, j)
+                        patron.agregar(j, valor)  # Agregar columnas como clave
+
+                    fila_clave = Par(i, patron)  # Usar el índice de la fila y los valores como clave
+
+                    if not patrones.contiene(fila_clave):
+                        patrones.agregar(fila_clave, [i])
                     else:
-                        patrones.obtener(patron).append(i)
+                        patrones.obtener(fila_clave).append(i)
 
                 matriz_reducida = Mapa()
-                for patron, filas in patrones.items():
-                    nueva_fila = len(matriz_reducida.items()) + 1
-                    matriz_reducida.agregar(nueva_fila, [0] * actual.m)
-                    
-                    for fila in filas:
+                fila_nueva = 1
+                while True:
+                    patron_fila = patrones.obtener(fila_nueva, [])
+                    if not patron_fila:
+                        break
+                    matriz_reducida.agregar(fila_nueva, [0] * actual.m)
+                    for fila in patron_fila:
                         for j in range(1, actual.m + 1):
-                            matriz_reducida.obtener(nueva_fila)[j - 1] += matriz_original.obtener_dato(fila, j)
+                            matriz_reducida.obtener(fila_nueva)[j - 1] += matriz_original.obtener_dato(fila, j)
+                    fila_nueva += 1
 
-                # Agregar la matriz reducida al XML
                 matriz_element = ET.SubElement(
                     root,
                     "matriz",
@@ -240,15 +195,14 @@ class Menu:
                 )
 
                 for i, fila_datos in matriz_reducida.items():
-                    for j, valor in enumerate(fila_datos, start=1):
-                        dato_element = ET.SubElement(matriz_element, "dato", x=str(i), y=str(j))
+                    for j, valor in enumerate(fila_datos):
+                        dato_element = ET.SubElement(matriz_element, "dato", x=str(i), y=str(j + 1))
                         dato_element.text = str(valor)
-                
-                # Agregar las frecuencias al XML
+
                 for g, filas in patrones.items():
                     frecuencia_element = ET.SubElement(matriz_element, "frecuencia", g=str(len(filas)))
-                    frecuencia_element.text = str(len(filas))      
-                    
+                    frecuencia_element.text = str(len(filas))
+
             actual = actual.siguiente
             if actual == self.lista_matrices.primero:
                 break
@@ -260,6 +214,8 @@ class Menu:
             archivo_salida.write(pretty_xml_str)
 
         self.console.print("[green]Archivo de salida escrito exitosamente como 'archivo_salida.xml'.[/green]")
+
+
 
     def mostrar_matriz(self, nombre, datos):
         self.console.print(f"[yellow]Matriz '{nombre}':[/yellow]")
