@@ -1,15 +1,4 @@
 <?xml version="1.0" ?>
 <matrices>
-  <matriz nombre="Ejemplo_Salida" n="0" m="4" g="5">
-    <frecuencia g="1">1</frecuencia>
-    <frecuencia g="1">1</frecuencia>
-    <frecuencia g="1">1</frecuencia>
-    <frecuencia g="1">1</frecuencia>
-    <frecuencia g="1">1</frecuencia>
-  </matriz>
-  <matriz nombre="Ejemplo2_Salida" n="0" m="6" g="3">
-    <frecuencia g="1">1</frecuencia>
-    <frecuencia g="1">1</frecuencia>
-    <frecuencia g="1">1</frecuencia>
-  </matriz>
+  <matriz nombre="Ejemplo_Salida" n="0" m="4" g="1"/>
 </matrices>

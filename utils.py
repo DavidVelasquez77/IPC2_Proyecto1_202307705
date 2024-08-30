@@ -64,6 +64,14 @@ class Mapa:
             nodo_actual = nodo_actual.siguiente
         return items
 
+    def tamano(self):
+        count = 0
+        nodo_actual = self.inicio
+        while nodo_actual:
+            count += 1
+            nodo_actual = nodo_actual.siguiente
+        return count
+
 
 
 

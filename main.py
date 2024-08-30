@@ -165,35 +165,40 @@ class Menu:
                     patron = Lista()  # Usar una lista para representar el patrón de la fila
                     for j in range(1, actual.m + 1):
                             valor = actual.obtener_dato(i, j)
-                            patron.agregar(Par(j, valor), valor)  # Agregar el valor como parte del patrón
+                            patron.agregar(Par(j, valor))  # Agregar el valor como parte del patrón
 
-                    # Verificar si el patrón ya existe
-                    patron_existente = False
-                    for k in range(1, patrones.tamano() + 1):
-                        patron_guardado = patrones.obtener(Par(k, None))
-                        if self.comparar_patrones(patron_guardado, patron):
-                            # Si el patrón ya existe, añadir la fila a este grupo
-                            patrones.obtener(Par(k, None)).append(i)
-                            patron_existente = True
-                            break
+                # Verificar si el patrón ya existe
+                patron_existente = False
+                for k in range(1, patrones.tamano() + 1):
+                    patron_guardado = patrones.obtener(Par(k, None))
+                    if patron_guardado is not None and self.comparar_patrones(patron_guardado, patron):
+                        filas_grupo = patrones.obtener(Par(k, None))
+                        if filas_grupo is not None:
+                            filas_grupo.append(i)
+                        else:
+                            patrones.agregar(Par(k, None), [i])
+                        patron_existente = True
+                        break
 
-                    if not patron_existente:
-                        # Si el patrón no existe, crear un nuevo grupo para este patrón
-                        patrones.agregar(Par(patrones.tamano() + 1, patron), [i])
+
+                if not patron_existente:
+                    # Si el patrón no existe, crear un nuevo grupo para este patrón
+                    patrones.agregar(Par(patrones.tamano() + 1, patron), [i])
 
                 matriz_reducida = Mapa()
                 fila_nueva = 1
 
                 for k in range(1, patrones.tamano() + 1):
                     filas_grupo = patrones.obtener(Par(k, None))
-                    fila_datos = [0] * actual.m
-                    for fila in filas_grupo:
-                        for j in range(1, actual.m + 1):
-                            valor = matriz_original.obtener_dato(fila, j)
-                            fila_datos[j - 1] += valor  # Acumular valores
+                    if filas_grupo is not None:
+                        fila_datos = [0] * actual.m
+                        for fila in filas_grupo:
+                            for j in range(1, actual.m + 1):
+                                valor = matriz_original.obtener_dato(fila, j)
+                                fila_datos[j - 1] += valor  # Acumular valores
 
-                    matriz_reducida.agregar(fila_nueva, fila_datos)
-                    fila_nueva += 1
+                        matriz_reducida.agregar(fila_nueva, fila_datos)
+                        fila_nueva += 1
 
                 matriz_element = ET.SubElement(
                     root,
@@ -210,8 +215,10 @@ class Menu:
                         dato_element.text = str(valor)
 
                 for k in range(1, patrones.tamano() + 1):
-                    frecuencia_element = ET.SubElement(matriz_element, "frecuencia", g=str(k))
-                    frecuencia_element.text = str(len(patrones.obtener(Par(k, None))))
+                    filas_grupo = patrones.obtener(Par(k, None))
+                    if filas_grupo is not None:
+                        frecuencia_element = ET.SubElement(matriz_element, "frecuencia", g=str(k))
+                        frecuencia_element.text = str(len(filas_grupo))
 
             actual = actual.siguiente
             if actual == self.lista_matrices.primero:
@@ -227,6 +234,8 @@ class Menu:
 
 
     def comparar_patrones(self, patron1, patron2):
+        if patron1 is None or patron2 is None:
+            return False
         if patron1.tamano() != patron2.tamano():
             return False
         for i in range(1, patron1.tamano() + 1):
@@ -240,15 +249,15 @@ class Menu:
 
     def mostrar_matriz(self, nombre, datos):
         self.console.print(f"[yellow]Matriz '{nombre}':[/yellow]")
-        if not datos:
+        if datos.tamano() == 0:
             self.console.print("[red]No hay datos para mostrar en la matriz.[/red]")
             return
 
-        # Determinar el rango de filas y columnas
         max_x = max(par.x for par, valor in datos.items())
         max_y = max(par.y for par, valor in datos.items())
 
-        # Crear una tabla para mostrar la matriz
+        self.console.print(f"Dimensiones: {max_x}x{max_y}")
+
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Columna", style="cyan", justify="center")
         for j in range(1, max_y + 1):
@@ -257,10 +266,13 @@ class Menu:
         for i in range(1, max_x + 1):
             row = [str(i)]
             for j in range(1, max_y + 1):
-                row.append(str(datos.obtener(Par(i, j), 0)))
+                valor = datos.obtener(Par(i, j), 0)
+                self.console.print(f"Valor en {i},{j}: {valor}")
+                row.append(str(valor))
             table.add_row(*row)
 
         self.console.print(table)
+
 
     def generar_grafica(self):
         matriz = self.lista_matrices.primero
