@@ -1,4 +1,4 @@
-from ListaCircular import ListaCircular  # Asegúrate de que la ruta sea correcta para importar ListaCircular
+from ListaCircular import ListaCircular
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 from rich.console import Console
@@ -11,9 +11,62 @@ from rich import print
 from colorama import init
 import graphviz
 
-
 # Inicializar colorama
 init(autoreset=True)
+
+# Clases personalizadas para reemplazar estructuras nativas
+class Par:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __eq__(self, otro):
+        return self.x == otro.x and self.y == otro.y
+
+    def __hash__(self):
+        return hash((self.x, self.y))
+
+    def __repr__(self):
+        return f"({self.x}, {self.y})"
+
+class Mapa:
+    def __init__(self):
+        self._items = []
+
+    def agregar(self, clave, valor):
+        self._items.append((clave, valor))
+
+    def obtener(self, clave, valor_default=None):
+        for k, v in self._items:
+            if k == clave:
+                return v
+        return valor_default
+
+    def contiene(self, clave):
+        for k, v in self._items:
+            if k == clave:
+                return True
+        return False
+
+    def items(self):
+        return self._items
+
+
+class Lista:
+    def __init__(self):
+        self._items = []
+
+    def agregar(self, item):
+        self._items.append(item)
+
+    def obtener(self, index):
+        return self._items[index]
+
+    def __len__(self):
+        return len(self._items)
+
+    def items(self):
+        return self._items
 
 class Menu:
     def __init__(self):
@@ -94,13 +147,13 @@ class Menu:
             nombre = matriz_element.get('nombre')
             n = int(matriz_element.get('n'))
             m = int(matriz_element.get('m'))
-            datos = {}
+            datos = Mapa()
 
             for dato_element in matriz_element.findall('dato'):
                 x = int(dato_element.get('x'))
                 y = int(dato_element.get('y'))
                 valor = int(dato_element.text)
-                datos[(x, y)] = valor
+                datos.agregar(Par(x, y), valor)
 
             self.lista_matrices.agregar(nombre, n, m, datos)
             self.console.print(f"[green]Matriz '{nombre}' añadida a la lista circular.[/green]")
@@ -117,10 +170,10 @@ class Menu:
             self.console.print("[green]Matriz binaria generada.[/green]")
 
     def convertir_a_binario(self, datos):
-        datos_binarios = {}
-        for (x, y), valor in datos.items():
+        datos_binarios = Mapa()
+        for par, valor in datos.items():
             valor_binario = 1 if valor > 0 else 0
-            datos_binarios[(x, y)] = valor_binario
+            datos_binarios.agregar(par, valor_binario)
         return datos_binarios
     
     def mostrar_datos_estudiante(self):
@@ -145,7 +198,6 @@ class Menu:
         # Mostrar el panel en la consola
         self.console.print(panel)
 
-
     def escribir_archivo_salida(self):
         if self.lista_matrices.primero is None:
             self.console.print("[red]No hay matrices procesadas para escribir en el archivo de salida.[/red]")
@@ -157,41 +209,42 @@ class Menu:
         while True:
             if actual.nombre.endswith('_Binario'):
                 matriz_original = self.lista_matrices.buscar(actual.nombre.replace('_Binario', ''))
-                patrones = {}
+                patrones = Mapa()
 
                 for i in range(1, actual.n + 1):
                     # Construir el patrón de acceso como una tupla
                     patron = tuple(actual.obtener_dato(i, j) for j in range(1, actual.m + 1))
                     
-                    if patron not in patrones:
-                        patrones[patron] = [i]
+                    if not patrones.contiene(patron):
+                        patrones.agregar(patron, [i])
                     else:
-                        patrones[patron].append(i)
+                        patrones.obtener(patron).append(i)
 
-                matriz_reducida = {}
+                matriz_reducida = Mapa()
                 for patron, filas in patrones.items():
-                    nueva_fila = len(matriz_reducida) + 1
-                    matriz_reducida[nueva_fila] = [0] * actual.m
+                    nueva_fila = len(matriz_reducida.items()) + 1
+                    matriz_reducida.agregar(nueva_fila, [0] * actual.m)
                     
                     for fila in filas:
                         for j in range(1, actual.m + 1):
-                            matriz_reducida[nueva_fila][j - 1] += matriz_original.obtener_dato(fila, j)
+                            matriz_reducida.obtener(nueva_fila)[j - 1] += matriz_original.obtener_dato(fila, j)
 
                 # Agregar la matriz reducida al XML
                 matriz_element = ET.SubElement(
                     root,
                     "matriz",
                     nombre=f"{matriz_original.nombre}_Salida",
-                    n=str(len(matriz_reducida)),
+                    n=str(len(matriz_reducida.items())),
                     m=str(actual.m),
-                    g=str(len(patrones))
+                    g=str(len(patrones.items()))
                 )
 
                 for i, fila_datos in matriz_reducida.items():
                     for j, valor in enumerate(fila_datos, start=1):
                         dato_element = ET.SubElement(matriz_element, "dato", x=str(i), y=str(j))
                         dato_element.text = str(valor)
-            # Agregar las frecuencias al XML
+                
+                # Agregar las frecuencias al XML
                 for g, filas in patrones.items():
                     frecuencia_element = ET.SubElement(matriz_element, "frecuencia", g=str(len(filas)))
                     frecuencia_element.text = str(len(filas))      
@@ -215,8 +268,8 @@ class Menu:
             return
 
         # Determinar el rango de filas y columnas
-        max_x = max(x for x, y in datos.keys())
-        max_y = max(y for x, y in datos.keys())
+        max_x = max(par.x for par, valor in datos.items())
+        max_y = max(par.y for par, valor in datos.items())
 
         # Crear una tabla para mostrar la matriz
         table = Table(show_header=True, header_style="bold magenta")
@@ -227,36 +280,39 @@ class Menu:
         for i in range(1, max_x + 1):
             row = [str(i)]
             for j in range(1, max_y + 1):
-                row.append(str(datos.get((i, j), 0)))
+                row.append(str(datos.obtener(Par(i, j), 0)))
             table.add_row(*row)
 
         self.console.print(table)
 
     def generar_grafica(self):
-        if self.lista_matrices.primero is None:
-            self.console.print("[red]No hay matrices para generar la gráfica. Por favor, procesa un archivo primero.[/red]")
-            return
+        matriz = self.lista_matrices.primero
+        matriz_binaria = self.lista_matrices.buscar(f'{matriz.nombre}_Binario')
 
-        dot = graphviz.Digraph(comment="Matrices", format="png")
-        actual = self.lista_matrices.primero
+        # Crear el grafo para la matriz original
+        dot = graphviz.Digraph(comment=f'Matriz {matriz.nombre}')
+        for par, valor in matriz.datos.items():
+            dot.node(f'{par.x},{par.y}', f'{valor}')
+            if par.x < matriz.n:
+                dot.edge(f'{par.x},{par.y}', f'{par.x+1},{par.y}')
+            if par.y < matriz.m:
+                dot.edge(f'{par.x},{par.y}', f'{par.x},{par.y+1}')
 
-        while True:
-            dot.node(actual.nombre, actual.nombre)
-            actual = actual.siguiente
-            if actual == self.lista_matrices.primero:
-                break
+        # Renderizar el grafo de la matriz original
+        dot.render(f'{matriz.nombre}.gv', format='png', cleanup=True)
 
-        actual = self.lista_matrices.primero
-        while True:
-            dot.node(actual.nombre, actual.nombre)
-            if actual.siguiente is not None:
-                dot.edge(actual.nombre, actual.siguiente.nombre)
-            actual = actual.siguiente
-            if actual == self.lista_matrices.primero:
-                break
+        # Crear el grafo para la matriz binaria
+        dot_binario = graphviz.Digraph(comment=f'Matriz {matriz_binaria.nombre}')
+        for par, valor in matriz_binaria.datos.items():
+            dot_binario.node(f'{par.x},{par.y}', f'{valor}')
+            if par.x < matriz_binaria.n:
+                dot_binario.edge(f'{par.x},{par.y}', f'{par.x+1},{par.y}')
+            if par.y < matriz_binaria.m:
+                dot_binario.edge(f'{par.x},{par.y}', f'{par.x},{par.y+1}')
 
-        dot.render("matrices", format="png", cleanup=True)
-        self.console.print("[green]Gráfica generada exitosamente como 'matrices.png'.[/green]")       
+        # Renderizar el grafo de la matriz binaria
+        dot_binario.render(f'{matriz_binaria.nombre}.gv', format='png', cleanup=True)
+
 # Main loop para ejecutar el menú
 if __name__ == "__main__":
     menu = Menu()
