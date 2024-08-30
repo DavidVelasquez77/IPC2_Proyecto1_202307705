@@ -1,0 +1,15 @@
+// Matrices
+digraph {
+	Ejemplo [label=Ejemplo]
+	Ejemplo_Binario [label=Ejemplo_Binario]
+	Ejemplo2 [label=Ejemplo2]
+	Ejemplo2_Binario [label=Ejemplo2_Binario]
+	Ejemplo [label=Ejemplo]
+	Ejemplo -> Ejemplo_Binario
+	Ejemplo_Binario [label=Ejemplo_Binario]
+	Ejemplo_Binario -> Ejemplo2
+	Ejemplo2 [label=Ejemplo2]
+	Ejemplo2 -> Ejemplo2_Binario
+	Ejemplo2_Binario [label=Ejemplo2_Binario]
+	Ejemplo2_Binario -> Ejemplo
+}

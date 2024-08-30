@@ -9,6 +9,8 @@ import time
 from Nodo import Nodo
 from rich import print
 from colorama import init
+import graphviz
+
 
 # Inicializar colorama
 init(autoreset=True)
@@ -46,16 +48,22 @@ class Menu:
 
     def ejecutar_opcion(self, opcion):
         if opcion == 1:
+            self.console.print("✨ Has seleccionado la Opción 1: Cargando el archivo...")
             ruta = input("Ingresar la ruta del archivo: ")
             self.cargar_archivo(ruta)
         elif opcion == 2:
+            self.console.print("✨ Has seleccionado la Opción 2: Procesando el archivo...")
             self.procesar_archivo()  # Procesar el archivo y manejar la lista circular
         elif opcion == 3:
+            self.console.print("✨ Has seleccionado la Opción 3: Escribiendo el archivo de salida...")
             self.escribir_archivo_salida()  # Escribir archivo de salida
         elif opcion == 4:
+            self.console.print("✨ Has seleccionado la Opción 4: Mostrando datos del estudiante...")            
             self.mostrar_datos_estudiante()  # Mostrar datos del estudiante
         elif opcion == 5:
             self.console.print("✨ Has seleccionado la Opción 5: Generando gráfica...")
+            self.generar_grafica()  # Llama a la función para generar la gráfica
+
         elif opcion == 6:
             self.console.print("[red]❌ Saliendo del programa... ¡Hasta luego![/red]")
         else:
@@ -97,14 +105,16 @@ class Menu:
             self.lista_matrices.agregar(nombre, n, m, datos)
             self.console.print(f"[green]Matriz '{nombre}' añadida a la lista circular.[/green]")
 
+            self.console.print("[yellow]Calculando la matriz binaria...[/yellow]")
             datos_binarios = self.convertir_a_binario(datos)
             nombre_binario = f"{nombre}_Binario"
             self.lista_matrices.agregar(nombre_binario, n, m, datos_binarios)
-            self.console.print(f"[green]Matriz binaria '{nombre_binario}' generada y añadida a la lista circular.[/green]")
+            self.console.print("[yellow]Realizando suma de tuplas...[/yellow]")
 
             # Mostrar las matrices
             self.mostrar_matriz(nombre, datos)
             self.mostrar_matriz(nombre_binario, datos_binarios)
+            self.console.print("[green]Matriz binaria generada.[/green]")
 
     def convertir_a_binario(self, datos):
         datos_binarios = {}
@@ -222,6 +232,31 @@ class Menu:
 
         self.console.print(table)
 
+    def generar_grafica(self):
+        if self.lista_matrices.primero is None:
+            self.console.print("[red]No hay matrices para generar la gráfica. Por favor, procesa un archivo primero.[/red]")
+            return
+
+        dot = graphviz.Digraph(comment="Matrices", format="png")
+        actual = self.lista_matrices.primero
+
+        while True:
+            dot.node(actual.nombre, actual.nombre)
+            actual = actual.siguiente
+            if actual == self.lista_matrices.primero:
+                break
+
+        actual = self.lista_matrices.primero
+        while True:
+            dot.node(actual.nombre, actual.nombre)
+            if actual.siguiente is not None:
+                dot.edge(actual.nombre, actual.siguiente.nombre)
+            actual = actual.siguiente
+            if actual == self.lista_matrices.primero:
+                break
+
+        dot.render("matrices", format="png", cleanup=True)
+        self.console.print("[green]Gráfica generada exitosamente como 'matrices.png'.[/green]")       
 # Main loop para ejecutar el menú
 if __name__ == "__main__":
     menu = Menu()
