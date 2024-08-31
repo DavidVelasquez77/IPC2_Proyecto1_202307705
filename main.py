@@ -155,29 +155,30 @@ class Menu:
         [0]
         # Mostrar el panel en la consola
         self.console.print(panel)
-        
+            
     def escribir_archivo_salida(self):
         if self.lista_matrices.primero is None:
             self.console.print("[red]No hay matrices procesadas para escribir en el archivo de salida.[/red]")
             return
-    
+
         root = ET.Element("matrices")
         actual = self.lista_matrices.primero
-    
+
         while True:
             if actual.nombre.endswith('_Binario'):
                 matriz_original = self.lista_matrices.buscar(actual.nombre.replace('_Binario', ''))
                 patrones = Mapa()
-    
+
                 for i in range(1, actual.n + 1):
                     patron = Lista()
                     for j in range(1, actual.m + 1):
                         valor = actual.obtener_dato(i, j)
                         patron.agregar(Par(j, valor))
-    
+
                     patron_existente = False
                     for k in range(1, patrones.tamano() + 1):
-                        patron_info = patrones.obtener(Par(k, None))  # Cambiado a Par
+                        clave = Par(k, None)  # Usa Par como clave
+                        patron_info = patrones.obtener(clave)
                         if patron_info is not None and patron_info.tamano() >= 2:
                             filas_grupo = patron_info.obtener(1)
                             if filas_grupo is not None and filas_grupo.tamano() >= 1:
@@ -185,18 +186,19 @@ class Menu:
                                     filas_grupo.agregar(i)
                                     patron_existente = True
                                     break
-    
+
                     if not patron_existente:
                         filas_grupo = Lista()
                         filas_grupo.agregar(i)
                         nuevo_patron = Lista()
                         nuevo_patron.agregar(patron)
                         nuevo_patron.agregar(filas_grupo)
-                        patrones.agregar(Par(patrones.tamano(), None), nuevo_patron)  # Cambiado a Par
-    
+                        patrones.agregar(Par(patrones.tamano(), None), nuevo_patron)  # Usa Par como clave
+
                 matriz_reducida = Mapa()
                 for k in range(1, patrones.tamano() + 1):
-                    patron_info = patrones.obtener(k)  # Usa `k` directamente
+                    clave = Par(k, None)  # Usa Par como clave
+                    patron_info = patrones.obtener(clave)
                     if patron_info is not None:
                         filas_grupo = patron_info.obtener(1)
                         fila_datos = Lista()
@@ -206,8 +208,8 @@ class Menu:
                                 fila = filas_grupo.obtener(idx - 1)  # Ajustado índice
                                 suma += matriz_original.obtener_dato(fila, j)
                             fila_datos.agregar(suma)
-                        matriz_reducida.agregar(Par(k - 1, None), fila_datos)  # Cambiado a Par
-    
+                        matriz_reducida.agregar(Par(k - 1, None), fila_datos)  # Usa Par como clave
+
                 matriz_element = ET.SubElement(
                     root,
                     "matriz",
@@ -216,32 +218,33 @@ class Menu:
                     m=str(actual.m),
                     g=str(patrones.tamano())
                 )
-    
+
                 for i in range(1, matriz_reducida.tamano() + 1):
-                    fila_datos = matriz_reducida.obtener(Par(i - 1, None))  # Cambiado a Par
+                    fila_datos = matriz_reducida.obtener(Par(i - 1, None))  # Usa Par como clave
                     for j in range(1, fila_datos.tamano() + 1):
                         valor = fila_datos.obtener(j - 1)  # Ajustado índice
                         dato_element = ET.SubElement(matriz_element, "dato", x=str(i), y=str(j))
                         dato_element.text = str(valor)
-    
+
                 for k in range(1, patrones.tamano() + 1):
-                    patron_info = patrones.obtener(Par(k, None))  # Cambiado a Par
+                    patron_info = patrones.obtener(Par(k, None))  # Usa Par como clave
                     if patron_info is not None:
                         filas_grupo = patron_info.obtener(1)
                         frecuencia_element = ET.SubElement(matriz_element, "frecuencia", g=str(k))
                         frecuencia_element.text = str(filas_grupo.tamano())
-    
+
             actual = actual.siguiente
             if actual == self.lista_matrices.primero:
                 break
-    
+
         xml_str = ET.tostring(root, encoding="utf-8")
         pretty_xml_str = minidom.parseString(xml_str).toprettyxml(indent="  ")
-    
+
         with open("archivo_salida.xml", "w", encoding="utf-8") as archivo_salida:
             archivo_salida.write(pretty_xml_str)
-    
+
         self.console.print("[green]Archivo de salida escrito exitosamente como 'archivo_salida.xml'.[/green]")
+
 
 
 

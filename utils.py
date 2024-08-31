@@ -102,9 +102,9 @@ class Mapa:
             count += 1
             nodo_actual = nodo_actual.siguiente
         return count
-    
+
 class NodoLista:
-    def __init__(self, valor):
+    def __init__(self, valor=None):
         self.valor = valor
         self.siguiente = None
 
