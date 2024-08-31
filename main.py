@@ -187,7 +187,7 @@ class Menu:
                             filas_grupo.agregar(i)
                             patron_existente = True
                             break
-
+                        
                     if not patron_existente:
                         filas_grupo = Lista()
                         filas_grupo.agregar(i)
@@ -195,6 +195,7 @@ class Menu:
                         nuevo_patron.agregar(patron)
                         nuevo_patron.agregar(filas_grupo)
                         patrones.agregar(Par(patrones.tamano() + 1, None), nuevo_patron)
+
 
                 # Construir matriz reducida
                 matriz_reducida = Mapa()
@@ -211,6 +212,7 @@ class Menu:
                                 suma += matriz_original.obtener_dato(fila, j)
                             fila_datos.agregar(suma)
                         matriz_reducida.agregar(clave, fila_datos)
+
 
                 # Crear el elemento de la matriz
                 matriz_element = ET.SubElement(
@@ -235,8 +237,10 @@ class Menu:
                     patron_info = patrones.obtener(Par(k, None))
                     if patron_info is not None:
                         filas_grupo = patron_info.obtener(1)
+                        frecuencia = filas_grupo.tamano()
                         frecuencia_element = ET.SubElement(matriz_element, "frecuencia", g=str(k))
-                        frecuencia_element.text = str(filas_grupo.tamano())
+                        frecuencia_element.text = str(frecuencia)
+                        self.console.print(f"[yellow]Patrón {k}: Frecuencia {frecuencia}[/yellow]")  # Depuración
 
             actual = actual.siguiente
             if actual == self.lista_matrices.primero:
@@ -249,11 +253,6 @@ class Menu:
             archivo_salida.write(pretty_xml_str)
 
         self.console.print("[green]Archivo de salida escrito exitosamente como 'archivo_salida.xml'.[/green]")
-
-
-
-
-
 
 
     def comparar_patrones(self, patron1, patron2):
@@ -271,6 +270,7 @@ class Menu:
                 return False
         
         return True
+
 
 
     def mostrar_matriz(self, nombre, datos):
