@@ -1,5 +1,3 @@
-# utils.py
-
 class Par:
     def __init__(self, x, y):
         self.x = x
@@ -9,7 +7,11 @@ class Par:
         return self.x == otro.x and self.y == otro.y
 
     def __hash__(self):
-        return hash((self.x, self.y))
+        prime = 31
+        result = 1
+        result = prime * result + self.x
+        result = prime * result + self.y
+        return result
 
     def __repr__(self):
         return f"({self.x}, {self.y})"
@@ -46,7 +48,6 @@ class Mapa:
             nodo_actual = nodo_actual.siguiente
         return valor_default
 
-
     def contiene(self, clave):
         if not isinstance(clave, Par):
             raise TypeError("La clave debe ser una instancia de Par")
@@ -63,7 +64,9 @@ class Mapa:
         actual_lista = inicio_lista
         while nodo_actual:
             nuevo_item = NodoLista()
-            nuevo_item.valor = Par(nodo_actual.clave, nodo_actual.valor)
+            # Se evitan las tuplas. Se pueden crear nodos para la clave y el valor por separado, o cualquier otra estructura personalizada.
+            clave_valor_nodo = NodoMapa(nodo_actual.clave, nodo_actual.valor)
+            nuevo_item.valor = clave_valor_nodo
             actual_lista.siguiente = nuevo_item
             actual_lista = nuevo_item
             nodo_actual = nodo_actual.siguiente
@@ -133,4 +136,3 @@ class Lista:
             items_lista.agregar(nodo_actual.valor)
             nodo_actual = nodo_actual.siguiente
         return items_lista
-
