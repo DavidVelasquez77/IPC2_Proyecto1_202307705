@@ -25,7 +25,7 @@ class Menu:
         self.lista_matrices = ListaCircular()  # Inicializa la lista circular para almacenar matrices
 
     def mostrar_titulo(self):
-        ascii_titulo = pyfiglet.figlet_format("PROYECT", font="slant")
+        ascii_titulo = pyfiglet.figlet_format("PROYECTO-1", font="slant")
         panel = Panel(
             renderable=f"[magenta bold]{ascii_titulo}[/magenta bold]",
             title="✨ Menu Principal ✨",
@@ -141,6 +141,7 @@ class Menu:
         curso = "Introduccion a la Programacion y Computacion 2"
         carrera = "Ingenieria en Ciencias y Sistemas"
         semestre = "4to Semestre"
+        enlace_documentacion = "https://github.com/DavidVelasquez77/IPC2_Proyecto1_202307705.git"
         
         # Crear un panel con los datos del estudiante
         panel = Panel(
@@ -148,11 +149,12 @@ class Menu:
             f"[bold yellow]Carnet:[/bold yellow] [white]{carnet}[/white]\n"
             f"[bold yellow]Curso:[/bold yellow] [white]{curso}[/white]\n"
             f"[bold yellow]Carrera:[/bold yellow] [white]{carrera}[/white]\n"
-            f"[bold yellow]Semestre:[/bold yellow] [white]{semestre}[/white]",
+            f"[bold yellow]Semestre:[/bold yellow] [white]{semestre}[/white]\n"
+            f"[bold yellow]Documentación:[/bold yellow] [white]{enlace_documentacion}[/white]",
             title="[magenta]Datos del Estudiante[/magenta]",
             border_style="cyan"
         )
-        [0]
+        
         # Mostrar el panel en la consola
         self.console.print(panel)
             
