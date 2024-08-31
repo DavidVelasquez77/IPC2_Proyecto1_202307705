@@ -324,27 +324,18 @@ class Menu:
                 max_y = par.y
             nodo_datos = nodo_datos.siguiente
 
-        self.console.print(f"Dimensiones: {max_x}x{max_y}")
-
-        # Crear encabezado manualmente
-        encabezado = "Fila |"
-        j = 1
-        while j <= max_y:
-            encabezado += f" {j} |"
-            j += 1
-        self.console.print(encabezado)
-
         # Rellenar la tabla con los datos de la matriz sin usar add_row
         i = 1
         while i <= max_x:
-            fila = f"{i}   |"
+            fila = ""
             j = 1
             while j <= max_y:
                 valor = datos.obtener(Par(i, j), 0)
-                fila += f" {valor} |"
+                fila += f" {valor} "  # Concatenar los valores de la fila sin indicadores de filas o columnas
                 j += 1
             self.console.print(fila)
             i += 1
+
 
 
     def generar_grafica(self):
@@ -352,57 +343,45 @@ class Menu:
             self.console.print("[red]No hay matrices para generar gráficas.[/red]")
             return
 
-        # Obtener la matriz original
         matriz = self.lista_matrices.primero
-        matriz_binaria = self.lista_matrices.buscar(f'{matriz.nombre}_Binario')
 
-        # Crear el grafo para la matriz original
+        # Crear el grafo
         dot = graphviz.Digraph(comment=f'Matriz {matriz.nombre}', format='png')
-        dot.attr(dpi='100')
+        
+        # Ajustar el tamaño del lienzo y el espacio entre nodos
+        dot.attr(dpi='100', size="10,10", ranksep='0.5', nodesep='0.5')
 
-        # Añadir nodos y aristas para la matriz original
-        nodo_datos = matriz.datos.items().inicio
-        while nodo_datos:
-            clave_valor = nodo_datos.valor
-            par = clave_valor.clave
-            valor = clave_valor.valor
-            # Etiqueta con el valor de la matriz
-            dot.node(f'{par.x},{par.y}', label=f'{valor}', shape='box', style='filled', fillcolor='lightyellow')
+        # Nodo central con el título "Matrices"
+        dot.node('matrices', 'Matrices', shape='ellipse')
+
+        # Nodo con el nombre del ejemplo
+        dot.node('ejemplo', matriz.nombre, shape='ellipse')
+        dot.edge('matrices', 'ejemplo')
+
+        # Nodos con valores n y m
+        dot.node('n', f'n= {matriz.n}', shape='ellipse', style='bold', color='blue', penwidth='2')
+        dot.node('m', f'm= {matriz.m}', shape='ellipse', style='bold', color='blue', penwidth='2')
+        dot.edge('ejemplo', 'n')
+        dot.edge('ejemplo', 'm')
+
+        # Crear nodos para cada columna y sus valores
+        for j in range(1, matriz.m + 1):
+            dot.node(f'col_{j}', str(j), shape='ellipse')
+            dot.edge('ejemplo', f'col_{j}')
             
-            if par.x < matriz.n:
-                dot.edge(f'{par.x},{par.y}', f'{par.x+1},{par.y}')
-            if par.y < matriz.m:
-                dot.edge(f'{par.x},{par.y}', f'{par.x},{par.y+1}')
-            
-            nodo_datos = nodo_datos.siguiente
+            prev_node = f'col_{j}'
+            for i in range(1, matriz.n + 1):
+                valor = matriz.datos.obtener(Par(i, j), 0)
+                node_name = f'{i},{j}'
+                dot.node(node_name, str(valor), shape='ellipse')
+                dot.edge(prev_node, node_name)
+                prev_node = node_name
 
-        # Renderizar el grafo de la matriz original
-        dot.render(f'{matriz.nombre}_original.gv', format='png', cleanup=True)
+        # Renderizar el grafo
+        dot.render(f'{matriz.nombre}_grafica.gv', format='png', cleanup=True)
 
-        # Crear el grafo para la matriz binaria
-        dot_binario = graphviz.Digraph(comment=f'Matriz {matriz_binaria.nombre}', format='png')
-        dot_binario.attr(dpi='100')
+        self.console.print(f"[green]Gráfica generada exitosamente: '{matriz.nombre}_grafica.png'.[/green]")
 
-        # Añadir nodos y aristas para la matriz binaria
-        nodo_datos_binario = matriz_binaria.datos.items().inicio
-        while nodo_datos_binario:
-            clave_valor_binario = nodo_datos_binario.valor
-            par_binario = clave_valor_binario.clave
-            valor_binario = clave_valor_binario.valor
-            # Etiqueta con el valor binario de la matriz
-            dot_binario.node(f'{par_binario.x},{par_binario.y}', label=f'{valor_binario}', shape='box', style='filled', fillcolor='lightblue')
-            
-            if par_binario.x < matriz_binaria.n:
-                dot_binario.edge(f'{par_binario.x},{par_binario.y}', f'{par_binario.x+1},{par_binario.y}')
-            if par_binario.y < matriz_binaria.m:
-                dot_binario.edge(f'{par_binario.x},{par_binario.y}', f'{par_binario.x},{par_binario.y+1}')
-            
-            nodo_datos_binario = nodo_datos_binario.siguiente
-
-        # Renderizar el grafo de la matriz binaria
-        dot_binario.render(f'{matriz_binaria.nombre}_binario.gv', format='png', cleanup=True)
-
-        self.console.print(f"[green]Gráficas generadas exitosamente: '{matriz.nombre}_original.png' y '{matriz_binaria.nombre}_binario.png'.[/green]")
 
 
 
