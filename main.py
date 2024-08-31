@@ -117,14 +117,18 @@ class Menu:
             self.mostrar_matriz(nombre, datos)
             self.mostrar_matriz(nombre_binario, datos_binarios)
             self.console.print("[green]Matriz binaria generada.[/green]")
-
+   
     def convertir_a_binario(self, datos):
         datos_binarios = Mapa()
-        for par, valor in datos.items():
+        for item in datos.items():  # Assuming items() returns a Lista of Par objects
+            par = item  # `item` is already a Par object
+            valor = datos.obtener(par)  # Get the value associated with this Par object
             valor_binario = 1 if valor > 0 else 0
             datos_binarios.agregar(par, valor_binario)
         return datos_binarios
-    
+
+
+
     def mostrar_datos_estudiante(self):
         # Define los datos del estudiante
         nombre = "Josue David Velasquez Ixchop"
@@ -143,7 +147,7 @@ class Menu:
             title="[magenta]Datos del Estudiante[/magenta]",
             border_style="cyan"
         )
-        
+        [0]
         # Mostrar el panel en la consola
         self.console.print(panel)
 
@@ -162,43 +166,43 @@ class Menu:
 
                 # Procesar cada fila de la matriz binaria
                 for i in range(1, actual.n + 1):
-                    patron = Lista()  # Usar una lista para representar el patrón de la fila
+                    patron = Lista()
                     for j in range(1, actual.m + 1):
-                            valor = actual.obtener_dato(i, j)
-                            patron.agregar(Par(j, valor))  # Agregar el valor como parte del patrón
+                        valor = actual.obtener_dato(i, j)
+                        patron.agregar(Par(j, valor))
 
-                # Verificar si el patrón ya existe
-                patron_existente = False
-                for k in range(1, patrones.tamano() + 1):
-                    patron_guardado = patrones.obtener(Par(k, None))
-                    if patron_guardado is not None and self.comparar_patrones(patron_guardado, patron):
-                        filas_grupo = patrones.obtener(Par(k, None))
-                        if filas_grupo is not None:
-                            filas_grupo.append(i)
-                        else:
-                            patrones.agregar(Par(k, None), [i])
-                        patron_existente = True
-                        break
+                    # Verificar si el patrón ya existe
+                    patron_existente = False
+                    for k in range(1, patrones.tamano() + 1):
+                        patron_guardado = patrones.obtener(Par(k, None))
+                        if patron_guardado is not None and self.comparar_patrones(patron_guardado.obtener(Par(1, None)), patron):
+                            filas_grupo = patron_guardado.obtener(Par(2, None))
+                            filas_grupo.agregar(i)
+                            patron_existente = True
+                            break
 
-
-                if not patron_existente:
-                    # Si el patrón no existe, crear un nuevo grupo para este patrón
-                    patrones.agregar(Par(patrones.tamano() + 1, patron), [i])
+                    if not patron_existente:
+                        # Si el patrón no existe, crear un nuevo grupo para este patrón
+                        filas_grupo = Lista()
+                        filas_grupo.agregar(i)
+                        nuevo_patron = Lista()
+                        nuevo_patron.agregar(patron)
+                        nuevo_patron.agregar(filas_grupo)
+                        patrones.agregar(Par(patrones.tamano() + 1, nuevo_patron))
 
                 matriz_reducida = Mapa()
-                fila_nueva = 1
-
                 for k in range(1, patrones.tamano() + 1):
-                    filas_grupo = patrones.obtener(Par(k, None))
-                    if filas_grupo is not None:
-                        fila_datos = [0] * actual.m
-                        for fila in filas_grupo:
-                            for j in range(1, actual.m + 1):
-                                valor = matriz_original.obtener_dato(fila, j)
-                                fila_datos[j - 1] += valor  # Acumular valores
-
-                        matriz_reducida.agregar(fila_nueva, fila_datos)
-                        fila_nueva += 1
+                    patron_info = patrones.obtener(Par(k, None))
+                    if patron_info is not None:
+                        filas_grupo = patron_info.obtener(Par(2, None))
+                        fila_datos = Lista()
+                        for j in range(1, actual.m + 1):
+                            suma = 0
+                            for idx in range(1, filas_grupo.tamano() + 1):
+                                fila = filas_grupo.obtener(Par(idx, None))
+                                suma += matriz_original.obtener_dato(fila, j)
+                            fila_datos.agregar(suma)
+                        matriz_reducida.agregar(Par(k, fila_datos))
 
                 matriz_element = ET.SubElement(
                     root,
@@ -209,16 +213,19 @@ class Menu:
                     g=str(patrones.tamano())
                 )
 
-                for i, fila_datos in matriz_reducida.items():
-                    for j, valor in enumerate(fila_datos):
-                        dato_element = ET.SubElement(matriz_element, "dato", x=str(i), y=str(j + 1))
+                for i in range(1, matriz_reducida.tamano() + 1):
+                    fila_datos = matriz_reducida.obtener(Par(i, None))
+                    for j in range(1, fila_datos.tamano() + 1):
+                        valor = fila_datos.obtener(Par(j, None))
+                        dato_element = ET.SubElement(matriz_element, "dato", x=str(i), y=str(j))
                         dato_element.text = str(valor)
 
                 for k in range(1, patrones.tamano() + 1):
-                    filas_grupo = patrones.obtener(Par(k, None))
-                    if filas_grupo is not None:
+                    patron_info = patrones.obtener(Par(k, None))
+                    if patron_info is not None:
+                        filas_grupo = patron_info.obtener(Par(2, None))
                         frecuencia_element = ET.SubElement(matriz_element, "frecuencia", g=str(k))
-                        frecuencia_element.text = str(len(filas_grupo))
+                        frecuencia_element.text = str(filas_grupo.tamano())
 
             actual = actual.siguiente
             if actual == self.lista_matrices.primero:

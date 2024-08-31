@@ -13,7 +13,7 @@ class Par:
 
     def __repr__(self):
         return f"({self.x}, {self.y})"
-    
+
 class NodoMapa:
     def __init__(self, clave, valor):
         self.clave = clave
@@ -46,6 +46,7 @@ class Mapa:
             nodo_actual = nodo_actual.siguiente
         return valor_default
 
+
     def contiene(self, clave):
         if not isinstance(clave, Par):
             raise TypeError("La clave debe ser una instancia de Par")
@@ -57,12 +58,16 @@ class Mapa:
         return False
 
     def items(self):
-        items = []
         nodo_actual = self.inicio
+        inicio_lista = NodoLista()
+        actual_lista = inicio_lista
         while nodo_actual:
-            items.append((nodo_actual.clave, nodo_actual.valor))
+            nuevo_item = NodoLista()
+            nuevo_item.valor = Par(nodo_actual.clave, nodo_actual.valor)
+            actual_lista.siguiente = nuevo_item
+            actual_lista = nuevo_item
             nodo_actual = nodo_actual.siguiente
-        return items
+        return Lista(inicio_lista.siguiente)
 
     def tamano(self):
         count = 0
@@ -72,21 +77,60 @@ class Mapa:
             nodo_actual = nodo_actual.siguiente
         return count
 
-
-
+class NodoLista:
+    def __init__(self, valor=None):
+        self.valor = valor
+        self.siguiente = None
 
 class Lista:
-    def __init__(self):
-        self._items = []
+    def __init__(self, inicio=None):
+        self.inicio = inicio
 
     def agregar(self, item):
-        self._items.append(item)
+        nuevo_nodo = NodoLista(item)
+        if self.inicio is None:
+            self.inicio = nuevo_nodo
+        else:
+            nodo_actual = self.inicio
+            while nodo_actual.siguiente:
+                nodo_actual = nodo_actual.siguiente
+            nodo_actual.siguiente = nuevo_nodo
 
     def obtener(self, index):
-        return self._items[index]
+        nodo_actual = self.inicio
+        count = 0
+        while nodo_actual:
+            if count == index:
+                return nodo_actual.valor
+            nodo_actual = nodo_actual.siguiente
+            count += 1
+        raise IndexError("Índice fuera de rango")
 
     def __len__(self):
-        return len(self._items)
+        count = 0
+        nodo_actual = self.inicio
+        while nodo_actual:
+            count += 1
+            nodo_actual = nodo_actual.siguiente
+        return count
+
+    def __iter__(self):
+        self._current = self.inicio
+        return self
+
+    def __next__(self):
+        if self._current is None:
+            raise StopIteration
+        else:
+            valor = self._current.valor
+            self._current = self._current.siguiente
+            return valor
 
     def items(self):
-        return self._items
+        items_lista = Lista()
+        nodo_actual = self.inicio
+        while nodo_actual:
+            items_lista.agregar(nodo_actual.valor)
+            nodo_actual = nodo_actual.siguiente
+        return items_lista
+
