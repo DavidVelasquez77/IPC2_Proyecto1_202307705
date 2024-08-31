@@ -347,7 +347,7 @@ class Menu:
 
         # Crear el grafo
         dot = graphviz.Digraph(comment=f'Matriz {matriz.nombre}', format='png')
-        
+
         # Ajustar el tamaño del lienzo y el espacio entre nodos
         dot.attr(dpi='100', size="10,10", ranksep='0.5', nodesep='0.5')
 
@@ -364,12 +364,14 @@ class Menu:
         dot.edge('ejemplo', 'n')
         dot.edge('ejemplo', 'm')
 
-        # Crear nodos para cada columna y sus valores
+        # Crear nodos para cada columna y conectar con el nodo de la matriz
         for j in range(1, matriz.m + 1):
-            dot.node(f'col_{j}', str(j), shape='ellipse')
-            dot.edge('ejemplo', f'col_{j}')
-            
-            prev_node = f'col_{j}'
+            dot.node(f'col{j}', f'Columna {j}', shape='ellipse')
+            dot.edge('ejemplo', f'col{j}')
+
+        # Añadir nodos para los valores de la matriz y conectarlos correctamente
+        for j in range(1, matriz.m + 1):
+            prev_node = f'col{j}'
             for i in range(1, matriz.n + 1):
                 valor = matriz.datos.obtener(Par(i, j), 0)
                 node_name = f'{i},{j}'
