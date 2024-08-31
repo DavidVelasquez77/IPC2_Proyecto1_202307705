@@ -169,6 +169,7 @@ class Menu:
                 matriz_original = self.lista_matrices.buscar(actual.nombre.replace('_Binario', ''))
                 patrones = Mapa()
 
+                # Construir patrones
                 for i in range(1, actual.n + 1):
                     patron = Lista()
                     for j in range(1, actual.m + 1):
@@ -177,15 +178,13 @@ class Menu:
 
                     patron_existente = False
                     for k in range(1, patrones.tamano() + 1):
-                        clave = Par(k, None)  # Usa Par como clave
+                        clave = Par(k, None)
                         patron_info = patrones.obtener(clave)
-                        if patron_info is not None and patron_info.tamano() >= 2:
+                        if patron_info is not None and self.comparar_patrones(patron_info.obtener(0), patron):
                             filas_grupo = patron_info.obtener(1)
-                            if filas_grupo is not None and filas_grupo.tamano() >= 1:
-                                if self.comparar_patrones(patron_info.obtener(0), patron):
-                                    filas_grupo.agregar(i)
-                                    patron_existente = True
-                                    break
+                            filas_grupo.agregar(i)
+                            patron_existente = True
+                            break
 
                     if not patron_existente:
                         filas_grupo = Lista()
@@ -193,11 +192,12 @@ class Menu:
                         nuevo_patron = Lista()
                         nuevo_patron.agregar(patron)
                         nuevo_patron.agregar(filas_grupo)
-                        patrones.agregar(Par(patrones.tamano(), None), nuevo_patron)  # Usa Par como clave
+                        patrones.agregar(Par(patrones.tamano() + 1, None), nuevo_patron)
 
+                # Construir matriz reducida
                 matriz_reducida = Mapa()
                 for k in range(1, patrones.tamano() + 1):
-                    clave = Par(k, None)  # Usa Par como clave
+                    clave = Par(k, None)
                     patron_info = patrones.obtener(clave)
                     if patron_info is not None:
                         filas_grupo = patron_info.obtener(1)
@@ -205,11 +205,12 @@ class Menu:
                         for j in range(1, actual.m + 1):
                             suma = 0
                             for idx in range(1, filas_grupo.tamano() + 1):
-                                fila = filas_grupo.obtener(idx - 1)  # Ajustado índice
+                                fila = filas_grupo.obtener(idx - 1)
                                 suma += matriz_original.obtener_dato(fila, j)
                             fila_datos.agregar(suma)
-                        matriz_reducida.agregar(Par(k - 1, None), fila_datos)  # Usa Par como clave
+                        matriz_reducida.agregar(clave, fila_datos)
 
+                # Crear el elemento de la matriz
                 matriz_element = ET.SubElement(
                     root,
                     "matriz",
@@ -219,15 +220,17 @@ class Menu:
                     g=str(patrones.tamano())
                 )
 
+                # Agregar datos de la matriz reducida
                 for i in range(1, matriz_reducida.tamano() + 1):
-                    fila_datos = matriz_reducida.obtener(Par(i - 1, None))  # Usa Par como clave
+                    fila_datos = matriz_reducida.obtener(Par(i, None))
                     for j in range(1, fila_datos.tamano() + 1):
-                        valor = fila_datos.obtener(j - 1)  # Ajustado índice
+                        valor = fila_datos.obtener(j - 1)
                         dato_element = ET.SubElement(matriz_element, "dato", x=str(i), y=str(j))
                         dato_element.text = str(valor)
 
+                # Agregar frecuencias de patrones
                 for k in range(1, patrones.tamano() + 1):
-                    patron_info = patrones.obtener(Par(k, None))  # Usa Par como clave
+                    patron_info = patrones.obtener(Par(k, None))
                     if patron_info is not None:
                         filas_grupo = patron_info.obtener(1)
                         frecuencia_element = ET.SubElement(matriz_element, "frecuencia", g=str(k))
@@ -244,6 +247,7 @@ class Menu:
             archivo_salida.write(pretty_xml_str)
 
         self.console.print("[green]Archivo de salida escrito exitosamente como 'archivo_salida.xml'.[/green]")
+
 
 
 
