@@ -103,7 +103,8 @@ class Menu:
             nombre = matriz_element.get('nombre')
             if nombre in nombres_matrices:
                 self.console.print(f"[red]Error: La matriz con nombre '{nombre}' ya existe. Los nombres de matrices deben ser únicos.[/red]")
-                return
+                continue  # Continua con la siguiente matriz
+            
             nombres_matrices.add(nombre)
 
             try:
@@ -111,7 +112,7 @@ class Menu:
                 m = int(matriz_element.get('m'))
             except (TypeError, ValueError):
                 self.console.print(f"[red]Error: Los atributos 'n' y 'm' de la matriz '{nombre}' deben ser enteros válidos.[/red]")
-                return
+                continue  # Continua con la siguiente matriz
 
             datos = Mapa()
 
@@ -122,15 +123,15 @@ class Menu:
                     valor = int(dato_element.text)
                 except (TypeError, ValueError):
                     self.console.print(f"[red]Error: Los atributos 'x', 'y' y el valor de los datos de la matriz '{nombre}' deben ser enteros válidos.[/red]")
-                    return
+                    continue  # Continua con la siguiente matriz
 
                 if not (1 <= x <= n):
                     self.console.print(f"[red]Error: El valor 'x'={x} en la matriz '{nombre}' excede el límite de filas 'n'={n} o es menor que 1.[/red]")
-                    return
+                    continue  # Continua con la siguiente matriz
 
                 if not (1 <= y <= m):
                     self.console.print(f"[red]Error: El valor 'y'={y} en la matriz '{nombre}' excede el límite de columnas 'm'={m} o es menor que 1.[/red]")
-                    return
+                    continue  # Continua con la siguiente matriz
 
                 datos.agregar(Par(x, y), valor)
 
@@ -146,6 +147,7 @@ class Menu:
             self.mostrar_matriz(nombre, datos)
             self.mostrar_matriz(nombre_binario, datos_binarios)
             self.console.print("[green]Matriz binaria generada.[/green]")
+
    
     def convertir_a_binario(self, mapa):
         datos_binarios = Mapa()
@@ -194,10 +196,17 @@ class Menu:
 
         while True:
             if actual.nombre.endswith('_Binario'):
+                # Obtener la matriz original
                 matriz_original = self.lista_matrices.buscar(actual.nombre.replace('_Binario', ''))
+
+                if matriz_original is None:
+                    actual = actual.siguiente
+                    if actual == self.lista_matrices.primero:
+                        break
+                    continue
+
                 patrones = Mapa()
 
-                # Construir patrones
                 for i in range(1, actual.n + 1):
                     patron = Lista()
                     for j in range(1, actual.m + 1):
@@ -222,26 +231,21 @@ class Menu:
                         nuevo_patron.agregar(filas_grupo)
                         patrones.agregar(Par(patrones.tamano() + 1, None), nuevo_patron)
 
-
-
-                    # Construcción de la matriz reducida
-                    matriz_reducida = Mapa()
-                    for k in range(1, patrones.tamano() + 1):
-                        clave = Par(k, None)
-                        patron_info = patrones.obtener(clave)
-                        if patron_info is not None:
-                            filas_grupo = patron_info.obtener(1)
-                            fila_datos = Lista()
-                            for j in range(1, actual.m + 1):
-                                suma = 0
-                                for idx in range(1, filas_grupo.tamano() + 1):
-                                    fila = filas_grupo.obtener(idx - 1)
-                                    suma += matriz_original.obtener_dato(fila, j)
-                                fila_datos.agregar(suma)
-                            matriz_reducida.agregar(clave, fila_datos)
-
-
-
+                # Construcción de la matriz reducida
+                matriz_reducida = Mapa()
+                for k in range(1, patrones.tamano() + 1):
+                    clave = Par(k, None)
+                    patron_info = patrones.obtener(clave)
+                    if patron_info is not None:
+                        filas_grupo = patron_info.obtener(1)
+                        fila_datos = Lista()
+                        for j in range(1, actual.m + 1):
+                            suma = 0
+                            for idx in range(1, filas_grupo.tamano() + 1):
+                                fila = filas_grupo.obtener(idx - 1)
+                                suma += matriz_original.obtener_dato(fila, j)
+                            fila_datos.agregar(suma)
+                        matriz_reducida.agregar(clave, fila_datos)
 
                 # Crear el elemento de la matriz
                 matriz_element = ET.SubElement(
@@ -269,8 +273,8 @@ class Menu:
                         frecuencia = filas_grupo.tamano()
                         frecuencia_element = ET.SubElement(matriz_element, "frecuencia", g=str(k))
                         frecuencia_element.text = str(frecuencia)
-                        self.console.print(f"[yellow]Patrón {k}: Frecuencia {frecuencia}[/yellow]")
 
+                self.console.print(f"[yellow]Patrón {k}: Frecuencia {frecuencia}[/yellow]")
 
             actual = actual.siguiente
             if actual == self.lista_matrices.primero:
@@ -283,7 +287,6 @@ class Menu:
             archivo_salida.write(pretty_xml_str)
 
         self.console.print("[green]Archivo de salida escrito exitosamente como 'archivo_salida.xml'.[/green]")
-
 
     def comparar_patrones(self, patron1, patron2):
         if patron1 is None or patron2 is None:
@@ -340,13 +343,16 @@ class Menu:
 
     def generar_grafica(self):
         if self.lista_matrices.primero is None:
-            self.console.print("[red]No hay matrices para generar gráficas.[/red]")
+            self.console.print("[red]No hay matrices para generar gráficas.[/red]") 
             return
 
         matriz = self.lista_matrices.primero
 
+        # Crear el grafo para la matriz original
+        matriz_actual = matriz
+
         # Crear el grafo
-        dot = graphviz.Digraph(comment=f'Matriz {matriz.nombre}', format='png')
+        dot = graphviz.Digraph(comment=f'Matriz {matriz_actual.nombre}', format='png')
 
         # Ajustar el tamaño del lienzo y el espacio entre nodos
         dot.attr(dpi='100', size="10,10", ranksep='0.5', nodesep='0.5')
@@ -355,34 +361,33 @@ class Menu:
         dot.node('matrices', 'Matrices', shape='ellipse')
 
         # Nodo con el nombre del ejemplo
-        dot.node('ejemplo', matriz.nombre, shape='ellipse')
+        dot.node('ejemplo', matriz_actual.nombre, shape='ellipse')
         dot.edge('matrices', 'ejemplo')
 
         # Nodos con valores n y m
-        dot.node('n', f'n= {matriz.n}', shape='ellipse', style='bold', color='blue', penwidth='2')
-        dot.node('m', f'm= {matriz.m}', shape='ellipse', style='bold', color='blue', penwidth='2')
+        dot.node('n', f'n= {matriz_actual.n}', shape='ellipse', style='bold', color='blue', penwidth='2')
+        dot.node('m', f'm= {matriz_actual.m}', shape='ellipse', style='bold', color='blue', penwidth='2')
         dot.edge('ejemplo', 'n')
         dot.edge('ejemplo', 'm')
 
         # Crear nodos para cada columna y conectar con el nodo de la matriz
-        for j in range(1, matriz.m + 1):
+        for j in range(1, matriz_actual.m + 1):
             dot.node(f'col{j}', f'Columna {j}', shape='ellipse')
             dot.edge('ejemplo', f'col{j}')
 
-        # Añadir nodos para los valores de la matriz y conectarlos correctamente
-        for j in range(1, matriz.m + 1):
+        # Añadir nodos para los valores de la matriz
+        for j in range(1, matriz_actual.m + 1):
             prev_node = f'col{j}'
-            for i in range(1, matriz.n + 1):
-                valor = matriz.datos.obtener(Par(i, j), 0)
+            for i in range(1, matriz_actual.n + 1):
+                valor = matriz_actual.datos.obtener(Par(i, j), 0)
                 node_name = f'{i},{j}'
                 dot.node(node_name, str(valor), shape='ellipse')
                 dot.edge(prev_node, node_name)
                 prev_node = node_name
 
         # Renderizar el grafo
-        dot.render(f'{matriz.nombre}_grafica.gv', format='png', cleanup=True)
-
-        self.console.print(f"[green]Gráfica generada exitosamente: '{matriz.nombre}_grafica.png'.[/green]")
+        dot.render(f'{matriz_actual.nombre}_original_grafica.gv', format='png', cleanup=True)
+        self.console.print(f"[green]Gráfica '{matriz_actual.nombre}_original_grafica.png' generada exitosamente.[/green]")
 
 
 
