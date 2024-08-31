@@ -121,23 +121,18 @@ class Menu:
 
 
    
-    def convertir_a_binario(self, datos):
+    def convertir_a_binario(self, mapa):
         datos_binarios = Mapa()
-        
-        # Obtener todos los elementos de datos usando la lista personalizada
-        lista_datos = datos.items()
-        nodo_actual = lista_datos.inicio
-        
+        nodo_actual = mapa.items().inicio
+
         while nodo_actual:
-            par, valor = nodo_actual.valor
-            valor_binario = 1 if valor > 0 else 0
-            datos_binarios.agregar(par, valor_binario)
+            clave = nodo_actual.valor.clave  # Accede al objeto `Par` que es la clave
+            valor = nodo_actual.valor.valor  # Accede al valor asociado
+            valor_binario = 1 if valor > 0 else 0  # Convertir el valor a binario (1 o 0)
+            datos_binarios.agregar(clave, valor_binario)  # Agregar al nuevo Mapa de datos binarios
             nodo_actual = nodo_actual.siguiente
 
         return datos_binarios
-
-
-
 
     def mostrar_datos_estudiante(self):
         # Define los datos del estudiante
@@ -290,9 +285,11 @@ class Menu:
         max_x = 0
         max_y = 0
         nodo_datos = datos.items().inicio
-        
+
         while nodo_datos:
-            par, valor = nodo_datos.valor
+            clave_valor_nodo = nodo_datos.valor  # Obtén el objeto NodoMapa
+            par = clave_valor_nodo.clave  # Accede a la clave (un objeto Par)
+            valor = clave_valor_nodo.valor  # Accede al valor asociado
             if par.x > max_x:
                 max_x = par.x
             if par.y > max_y:
@@ -303,8 +300,8 @@ class Menu:
 
         # Crear la tabla para mostrar los datos
         table = Table(show_header=True, header_style="bold magenta")
-        table.add_column("Columna", style="cyan", justify="center")
-        
+        table.add_column("Fila", style="cyan", justify="center")
+
         # Agregar columnas para la tabla
         j = 1
         while j <= max_y:
@@ -314,30 +311,17 @@ class Menu:
         # Rellenar la tabla con los datos de la matriz
         i = 1
         while i <= max_x:
-            row_inicio = NodoLista(str(i))
-            row_actual = row_inicio
-            
+            row_datos = []
             j = 1
             while j <= max_y:
                 valor = datos.obtener(Par(i, j), 0)
-                nuevo_nodo = NodoLista(str(valor))
-                row_actual.siguiente = nuevo_nodo
-                row_actual = nuevo_nodo
+                row_datos.append(str(valor))
                 j += 1
-            
-            # Convertir la fila en una lista de valores
-            row_nodo = row_inicio
-            row_actual = row_nodo.siguiente  # Omitir la columna de índice de fila (i)
-            while row_actual:
-                table.add_column(row_actual.valor)
-                row_actual = row_actual.siguiente
 
+            table.add_row(str(i), *row_datos)
             i += 1
 
         self.console.print(table)
-
-
-
 
     def generar_grafica(self):
         # Obtener la matriz original y la matriz binaria
