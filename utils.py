@@ -51,16 +51,27 @@ class Mapa:
     def agregar(self, clave, valor):
         if not isinstance(clave, Par):
             raise TypeError("La clave debe ser una instancia de Par")
+        
         nuevo_nodo = NodoMapa(clave, valor)
+        
+        # Si la lista está vacía, agregamos el nuevo nodo como inicio
         if self.inicio is None:
             self.inicio = nuevo_nodo
         else:
-            nodo_actual = self.inicio
-            while nodo_actual.siguiente:
-                nodo_actual = nodo_actual.siguiente
-            nodo_actual.siguiente = nuevo_nodo
+            actual = self.inicio
+            while actual.siguiente:
+                # Si la clave ya existe, actualizamos el valor y terminamos
+                if actual.clave == clave:
+                    actual.valor = valor
+                    return
+                actual = actual.siguiente
 
-
+            # Revisamos la última posición
+            if actual.clave == clave:
+                actual.valor = valor
+            else:
+                actual.siguiente = nuevo_nodo
+                
     def obtener(self, clave, valor_default=None):
         if not isinstance(clave, Par):
             raise TypeError("La clave debe ser una instancia de Par")
@@ -102,7 +113,6 @@ class Mapa:
             count += 1
             nodo_actual = nodo_actual.siguiente
         return count
-
 class NodoLista:
     def __init__(self, valor=None):
         self.valor = valor

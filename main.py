@@ -147,7 +147,6 @@ class Menu:
             self.mostrar_matriz(nombre, datos)
             self.mostrar_matriz(nombre_binario, datos_binarios)
             self.console.print("[green]Matriz binaria generada.[/green]")
-
    
     def convertir_a_binario(self, mapa):
         datos_binarios = Mapa()
@@ -157,6 +156,7 @@ class Menu:
             clave = nodo_actual.valor.clave  # Accede al objeto `Par` que es la clave
             valor = nodo_actual.valor.valor  # Accede al valor asociado
             valor_binario = 1 if valor > 0 else 0  # Convertir el valor a binario (1 o 0)
+            self.console.print(f"[debug] Convirtiendo ({clave.x},{clave.y}) valor {valor} a binario: {valor_binario}")
             datos_binarios.agregar(clave, valor_binario)  # Agregar al nuevo Mapa de datos binarios
             nodo_actual = nodo_actual.siguiente
 
@@ -190,29 +190,29 @@ class Menu:
         if self.lista_matrices.primero is None:
             self.console.print("[red]No hay matrices procesadas para escribir en el archivo de salida.[/red]")
             return
-
+    
         root = ET.Element("matrices")
         actual = self.lista_matrices.primero
-
+    
         while True:
             if actual.nombre.endswith('_Binario'):
                 # Obtener la matriz original
                 matriz_original = self.lista_matrices.buscar(actual.nombre.replace('_Binario', ''))
-
+    
                 if matriz_original is None:
                     actual = actual.siguiente
                     if actual == self.lista_matrices.primero:
                         break
                     continue
-
+    
                 patrones = Mapa()
-
+    
                 for i in range(1, actual.n + 1):
                     patron = Lista()
                     for j in range(1, actual.m + 1):
                         valor = actual.obtener_dato(i, j)
                         patron.agregar(Par(j, valor))
-
+    
                     patron_existente = False
                     for k in range(1, patrones.tamano() + 1):
                         clave = Par(k, None)
@@ -222,7 +222,7 @@ class Menu:
                             filas_grupo.agregar(i)
                             patron_existente = True
                             break
-
+    
                     if not patron_existente:
                         filas_grupo = Lista()
                         filas_grupo.agregar(i)
@@ -230,7 +230,7 @@ class Menu:
                         nuevo_patron.agregar(patron)
                         nuevo_patron.agregar(filas_grupo)
                         patrones.agregar(Par(patrones.tamano() + 1, None), nuevo_patron)
-
+    
                 # Construcción de la matriz reducida
                 matriz_reducida = Mapa()
                 for k in range(1, patrones.tamano() + 1):
@@ -246,7 +246,7 @@ class Menu:
                                 suma += matriz_original.obtener_dato(fila, j)
                             fila_datos.agregar(suma)
                         matriz_reducida.agregar(clave, fila_datos)
-
+    
                 # Crear el elemento de la matriz
                 matriz_element = ET.SubElement(
                     root,
@@ -256,7 +256,7 @@ class Menu:
                     m=str(actual.m),
                     g=str(patrones.tamano())
                 )
-
+    
                 # Agregar datos de la matriz reducida
                 for i in range(1, matriz_reducida.tamano() + 1):
                     fila_datos = matriz_reducida.obtener(Par(i, None))
@@ -264,7 +264,9 @@ class Menu:
                         valor = fila_datos.obtener(j - 1)
                         dato_element = ET.SubElement(matriz_element, "dato", x=str(i), y=str(j))
                         dato_element.text = str(valor)
-
+                        # Imprimir en consola
+                        self.console.print(f"[debug] Matriz '{matriz_original.nombre}_Salida': ({i},{j}) = {valor}")
+    
                 # Agregar frecuencias de patrones
                 for k in range(1, patrones.tamano() + 1):
                     patron_info = patrones.obtener(Par(k, None))
@@ -273,24 +275,27 @@ class Menu:
                         frecuencia = filas_grupo.tamano()
                         frecuencia_element = ET.SubElement(matriz_element, "frecuencia", g=str(k))
                         frecuencia_element.text = str(frecuencia)
-
-                self.console.print(f"[yellow]Patrón {k}: Frecuencia {frecuencia}[/yellow]")
+    
+                        # Imprimir en consola
+                        self.console.print(f"[debug] Patrón {k}: Frecuencia {frecuencia}")
+    
                 # Agregar la matriz de salida a la lista_matrices
                 self.lista_matrices.agregar(f"{matriz_original.nombre}_Salida", 
                                             matriz_reducida.tamano(), 
                                             actual.m, 
                                             matriz_reducida)
 
+    
             actual = actual.siguiente
             if actual == self.lista_matrices.primero:
                 break
-
+    
         xml_str = ET.tostring(root, encoding="utf-8")
         pretty_xml_str = minidom.parseString(xml_str).toprettyxml(indent="  ")
-
+    
         with open("archivo_salida.xml", "w", encoding="utf-8") as archivo_salida:
             archivo_salida.write(pretty_xml_str)
-
+    
         self.console.print("[green]Archivo de salida escrito exitosamente como 'archivo_salida.xml'.[/green]")
 
     def comparar_patrones(self, patron1, patron2):
@@ -308,8 +313,6 @@ class Menu:
                 return False
         
         return True
-
-
 
     def mostrar_matriz(self, nombre, datos):
         self.console.print(f"[yellow]Matriz '{nombre}':[/yellow]")
@@ -343,40 +346,64 @@ class Menu:
                 j += 1
             self.console.print(fila)
             i += 1
-
+            
     def crear_grafo(self, matriz, sufijo):
         dot = graphviz.Digraph(comment=f'Matriz {matriz.nombre}', format='png')
         dot.attr(dpi='100', size="10,10", ranksep='0.5', nodesep='0.5')
-
+    
         dot.node('matrices', 'Matrices', shape='ellipse')
         dot.node('ejemplo', matriz.nombre, shape='ellipse')
         dot.edge('matrices', 'ejemplo')
-
+    
         dot.node('n', f'n= {matriz.n}', shape='ellipse', style='bold', color='blue', penwidth='2')
         dot.node('m', f'm= {matriz.m}', shape='ellipse', style='bold', color='blue', penwidth='2')
         dot.edge('ejemplo', 'n')
         dot.edge('ejemplo', 'm')
-
+    
         for j in range(1, matriz.m + 1):
             dot.node(f'col{j}', f'Columna {j}', shape='ellipse')
             dot.edge('ejemplo', f'col{j}')
-
+    
         for j in range(1, matriz.m + 1):
             prev_node = f'col{j}'
             for i in range(1, matriz.n + 1):
                 valor = matriz.obtener_dato(i, j)
+                self.console.print(f"[debug] Obteniendo valor en ({i},{j}): {valor}")  # Depuración
                 node_name = f'{i},{j}'
                 dot.node(node_name, str(valor), shape='ellipse')
                 dot.edge(prev_node, node_name)
                 prev_node = node_name
-
+    
         dot.render(f'{matriz.nombre}_{sufijo}_grafica.gv', format='png', cleanup=True)
         self.console.print(f"[green]Gráfica '{matriz.nombre}_{sufijo}_grafica.png' generada exitosamente.[/green]")
-
+    
     def generar_grafica(self):
         if self.lista_matrices.primero is None:
-            self.console.print("[red]No hay matrices para generar gráficas.[/red]") 
+            self.console.print("[red]No hay matrices para generar gráficas.[/red]")
             return
+
+        # Imprimir todas las matrices de salida disponibles en la lista
+        self.console.print("[blue]Matrices de salida disponibles y su contenido:[/blue]")
+        current = self.lista_matrices.primero
+        has_matrices_salida = False
+
+        while True:
+            if current.nombre.endswith('_Salida'):
+                self.console.print(f"[yellow]Matriz '{current.nombre}':[/yellow]")
+                for i in range(1, current.n + 1):
+                    fila = ""
+                    for j in range(1, current.m + 1):
+                        valor = current.obtener_dato(i, j)
+                        fila += f" {valor} "  # Concatenar los valores de la fila
+                    self.console.print(fila)
+                self.console.print()  # Nueva línea para separar matrices
+                has_matrices_salida = True
+            current = current.siguiente
+            if current == self.lista_matrices.primero:
+                break
+
+        if not has_matrices_salida:
+            self.console.print("[yellow]No hay matrices de salida disponibles para mostrar.[/yellow]")
 
         nombre_matriz = input("Ingresa el nombre de la matriz para generar la gráfica: ")
         matriz_original = self.lista_matrices.buscar(nombre_matriz)
@@ -392,17 +419,37 @@ class Menu:
         if matriz_Salida is None:
             self.console.print(f"[yellow]No se encontró una matriz de salida '{nombre_matriz_Salida}'. Solo se generará la gráfica de la matriz original.[/yellow]")
 
+        # Imprimir datos para verificar
+        self.console.print(f"[debug] Datos de la matriz original '{nombre_matriz}':")
+        for i in range(1, matriz_original.n + 1):
+            fila = ""
+            for j in range(1, matriz_original.m + 1):
+                valor = matriz_original.obtener_dato(i, j)
+                fila += f" {valor} "
+            self.console.print(fila)
+
         # Generar gráfica para la matriz original
         self.crear_grafo(matriz_original, "original")
 
-        # Generar gráfica para la matriz de salida si existe
+        # Imprimir datos de la matriz de salida para verificar
         if matriz_Salida:
+            self.console.print(f"[debug] Matriz de salida cargada: {matriz_Salida.nombre}")
+            for i in range(1, matriz_Salida.n + 1):
+                fila = ""
+                for j in range(1, matriz_Salida.m + 1):
+                    valor = matriz_Salida.obtener_dato(i, j)
+                    fila += f" {valor} "
+                self.console.print(f"[debug] Fila {i}: {fila}")
+            
+            # Generar gráfica para la matriz de salida
             self.crear_grafo(matriz_Salida, "salida")
         else:
             self.console.print(f"[yellow]No se generó gráfica de salida porque no se encontró la matriz '{nombre_matriz_Salida}'.[/yellow]")
 
         self.console.print("[blue]Proceso de generación de gráficas completado.[/blue]")
-        
+
+
+
         # Agregar esta sección para depuración
         self.console.print("[blue]Matrices en la lista:[/blue]")
         current = self.lista_matrices.primero
@@ -411,6 +458,7 @@ class Menu:
             current = current.siguiente
             if current == self.lista_matrices.primero:
                 break
+
             
 # Main loop para ejecutar el menú
 if __name__ == "__main__":
