@@ -10,7 +10,8 @@ class Nodo:
         self.siguiente = None
 
     def obtener_dato(self, x, y):
-        return self.datos.obtener(Par(x, y), 0)  # Usar Par como clave
+        valor = self.datos.obtener(Par(x, y))
+        return valor if valor is not None else 0
 
     def establecer_dato(self, x, y, valor):
         self.datos.agregar(Par(x, y), valor)  # Usar Par como clave
