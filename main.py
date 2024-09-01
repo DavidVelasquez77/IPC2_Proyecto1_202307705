@@ -275,6 +275,11 @@ class Menu:
                         frecuencia_element.text = str(frecuencia)
 
                 self.console.print(f"[yellow]Patrón {k}: Frecuencia {frecuencia}[/yellow]")
+                # Agregar la matriz de salida a la lista_matrices
+                self.lista_matrices.agregar(f"{matriz_original.nombre}_Salida", 
+                                            matriz_reducida.tamano(), 
+                                            actual.m, 
+                                            matriz_reducida)
 
             actual = actual.siguiente
             if actual == self.lista_matrices.primero:
@@ -339,59 +344,74 @@ class Menu:
             self.console.print(fila)
             i += 1
 
+    def crear_grafo(self, matriz, sufijo):
+        dot = graphviz.Digraph(comment=f'Matriz {matriz.nombre}', format='png')
+        dot.attr(dpi='100', size="10,10", ranksep='0.5', nodesep='0.5')
 
+        dot.node('matrices', 'Matrices', shape='ellipse')
+        dot.node('ejemplo', matriz.nombre, shape='ellipse')
+        dot.edge('matrices', 'ejemplo')
+
+        dot.node('n', f'n= {matriz.n}', shape='ellipse', style='bold', color='blue', penwidth='2')
+        dot.node('m', f'm= {matriz.m}', shape='ellipse', style='bold', color='blue', penwidth='2')
+        dot.edge('ejemplo', 'n')
+        dot.edge('ejemplo', 'm')
+
+        for j in range(1, matriz.m + 1):
+            dot.node(f'col{j}', f'Columna {j}', shape='ellipse')
+            dot.edge('ejemplo', f'col{j}')
+
+        for j in range(1, matriz.m + 1):
+            prev_node = f'col{j}'
+            for i in range(1, matriz.n + 1):
+                valor = matriz.obtener_dato(i, j)
+                node_name = f'{i},{j}'
+                dot.node(node_name, str(valor), shape='ellipse')
+                dot.edge(prev_node, node_name)
+                prev_node = node_name
+
+        dot.render(f'{matriz.nombre}_{sufijo}_grafica.gv', format='png', cleanup=True)
+        self.console.print(f"[green]Gráfica '{matriz.nombre}_{sufijo}_grafica.png' generada exitosamente.[/green]")
 
     def generar_grafica(self):
         if self.lista_matrices.primero is None:
             self.console.print("[red]No hay matrices para generar gráficas.[/red]") 
             return
 
-        matriz = self.lista_matrices.primero
+        nombre_matriz = input("Ingresa el nombre de la matriz para generar la gráfica: ")
+        matriz_original = self.lista_matrices.buscar(nombre_matriz)
 
-        # Crear el grafo para la matriz original
-        matriz_actual = matriz
+        if matriz_original is None:
+            self.console.print(f"[red]No se encontró una matriz con el nombre '{nombre_matriz}'.[/red]")
+            return
 
-        # Crear el grafo
-        dot = graphviz.Digraph(comment=f'Matriz {matriz_actual.nombre}', format='png')
+        # Buscar la matriz de salida correspondiente
+        nombre_matriz_Salida = f"{nombre_matriz}_Salida"
+        matriz_Salida = self.lista_matrices.buscar(nombre_matriz_Salida)
 
-        # Ajustar el tamaño del lienzo y el espacio entre nodos
-        dot.attr(dpi='100', size="10,10", ranksep='0.5', nodesep='0.5')
+        if matriz_Salida is None:
+            self.console.print(f"[yellow]No se encontró una matriz de salida '{nombre_matriz_Salida}'. Solo se generará la gráfica de la matriz original.[/yellow]")
 
-        # Nodo central con el título "Matrices"
-        dot.node('matrices', 'Matrices', shape='ellipse')
+        # Generar gráfica para la matriz original
+        self.crear_grafo(matriz_original, "original")
 
-        # Nodo con el nombre del ejemplo
-        dot.node('ejemplo', matriz_actual.nombre, shape='ellipse')
-        dot.edge('matrices', 'ejemplo')
+        # Generar gráfica para la matriz de salida si existe
+        if matriz_Salida:
+            self.crear_grafo(matriz_Salida, "salida")
+        else:
+            self.console.print(f"[yellow]No se generó gráfica de salida porque no se encontró la matriz '{nombre_matriz_Salida}'.[/yellow]")
 
-        # Nodos con valores n y m
-        dot.node('n', f'n= {matriz_actual.n}', shape='ellipse', style='bold', color='blue', penwidth='2')
-        dot.node('m', f'm= {matriz_actual.m}', shape='ellipse', style='bold', color='blue', penwidth='2')
-        dot.edge('ejemplo', 'n')
-        dot.edge('ejemplo', 'm')
-
-        # Crear nodos para cada columna y conectar con el nodo de la matriz
-        for j in range(1, matriz_actual.m + 1):
-            dot.node(f'col{j}', f'Columna {j}', shape='ellipse')
-            dot.edge('ejemplo', f'col{j}')
-
-        # Añadir nodos para los valores de la matriz
-        for j in range(1, matriz_actual.m + 1):
-            prev_node = f'col{j}'
-            for i in range(1, matriz_actual.n + 1):
-                valor = matriz_actual.datos.obtener(Par(i, j), 0)
-                node_name = f'{i},{j}'
-                dot.node(node_name, str(valor), shape='ellipse')
-                dot.edge(prev_node, node_name)
-                prev_node = node_name
-
-        # Renderizar el grafo
-        dot.render(f'{matriz_actual.nombre}_original_grafica.gv', format='png', cleanup=True)
-        self.console.print(f"[green]Gráfica '{matriz_actual.nombre}_original_grafica.png' generada exitosamente.[/green]")
-
-
-
-
+        self.console.print("[blue]Proceso de generación de gráficas completado.[/blue]")
+        
+        # Agregar esta sección para depuración
+        self.console.print("[blue]Matrices en la lista:[/blue]")
+        current = self.lista_matrices.primero
+        while current:
+            self.console.print(f"- {current.nombre}")
+            current = current.siguiente
+            if current == self.lista_matrices.primero:
+                break
+            
 # Main loop para ejecutar el menú
 if __name__ == "__main__":
     menu = Menu()
