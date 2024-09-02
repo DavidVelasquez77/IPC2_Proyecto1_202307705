@@ -343,37 +343,33 @@ class Menu:
     def crear_grafo(self, matriz, sufijo):
         dot = graphviz.Digraph(comment=f'Matriz {matriz.nombre}', format='png')
         dot.attr(dpi='100', size="10,10", ranksep='0.5', nodesep='0.5')
-
+    
         dot.node('matrices', 'Matrices', shape='ellipse')
         dot.node('ejemplo', matriz.nombre, shape='ellipse')
         dot.edge('matrices', 'ejemplo')
-
+    
         dot.node('n', f'n= {matriz.n}', shape='ellipse', style='bold', color='blue', penwidth='2')
         dot.node('m', f'm= {matriz.m}', shape='ellipse', style='bold', color='blue', penwidth='2')
         dot.edge('ejemplo', 'n')
         dot.edge('ejemplo', 'm')
-
+    
         for j in range(1, matriz.m + 1):
             dot.node(f'col{j}', f'Columna {j}', shape='ellipse')
             dot.edge('ejemplo', f'col{j}')
-
+    
         for j in range(1, matriz.m + 1):
             prev_node = f'col{j}'
             for i in range(1, matriz.n + 1):
-                # Condición para omitir la fila 3 solo para la gráfica de entrada
-                if sufijo == "original" and i == 3:
-                    self.console.print(f"[debug] Omitiendo fila 3, columna {j} para la gráfica de entrada.")
-                    continue
                 valor = matriz.obtener_dato(i, j)
                 self.console.print(f"[debug] Obteniendo valor en ({i},{j}): {valor}")  # Depuración
                 node_name = f'{i},{j}'
                 dot.node(node_name, str(valor), shape='ellipse')
                 dot.edge(prev_node, node_name)
                 prev_node = node_name
-
+    
         dot.render(f'{matriz.nombre}_{sufijo}_grafica.gv', format='png', cleanup=True)
         self.console.print(f"[green]Gráfica '{matriz.nombre}_{sufijo}_grafica.png' generada exitosamente.[/green]")
-
+    
     def generar_grafica(self):
         if self.lista_matrices.primero is None:
             self.console.print("[red]No hay matrices para generar gráficas.[/red]")
@@ -425,7 +421,7 @@ class Menu:
                 fila += f" {valor} "
             self.console.print(fila)
 
-        # Generar gráfica para la matriz original (entrada)
+        # Generar gráfica para la matriz original
         self.crear_grafo(matriz_original, "original")
 
         # Imprimir datos de la matriz de salida para verificar
@@ -444,6 +440,8 @@ class Menu:
             self.console.print(f"[yellow]No se generó gráfica de salida porque no se encontró la matriz '{nombre_matriz_Salida}'.[/yellow]")
 
         self.console.print("[blue]Proceso de generación de gráficas completado.[/blue]")
+
+
 
         # Agregar esta sección para depuración
         self.console.print("[blue]Matrices en la lista:[/blue]")
