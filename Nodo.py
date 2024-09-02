@@ -1,4 +1,3 @@
-# Nodo.py
 from utils import Par 
 
 class Nodo:
@@ -6,7 +5,7 @@ class Nodo:
         self.nombre = nombre
         self.n = n
         self.m = m
-        self.datos = datos  # datos debe ser una instancia de Mapa
+        self.datos = datos 
         self.siguiente = None
 
     def obtener_dato(self, x, y):
@@ -14,7 +13,7 @@ class Nodo:
         return valor if valor is not None else 0
 
     def establecer_dato(self, x, y, valor):
-        self.datos.agregar(Par(x, y), valor)  # Usar Par como clave
+        self.datos.agregar(Par(x, y), valor)  
 
     def mostrar_matriz(self):
         """Muestra la matriz completa en formato tabular."""
@@ -26,4 +25,4 @@ class Nodo:
                     fila += " | "
                 fila += valor
             print(fila)
-        print()  # Línea en blanco al final de la matriz
+        print() 

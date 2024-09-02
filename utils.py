@@ -4,13 +4,13 @@ class Par:
         self.y = y
 
     def __eq__(self, otro):
-        # Comprueba si otro es una instancia de Par
+
         if isinstance(otro, Par):
             return self.x == otro.x and self.y == otro.y
         return False
 
     def __hash__(self):
-        # Calcula el hash usando un enfoque manual en lugar de hash((x, y))
+
         prime = 31
         result = 1
         result = prime * result + self.x
@@ -54,19 +54,16 @@ class Mapa:
         
         nuevo_nodo = NodoMapa(clave, valor)
         
-        # Si la lista está vacía, agregamos el nuevo nodo como inicio
         if self.inicio is None:
             self.inicio = nuevo_nodo
         else:
             actual = self.inicio
             while actual.siguiente:
-                # Si la clave ya existe, actualizamos el valor y terminamos
                 if actual.clave == clave:
                     actual.valor = valor
                     return
                 actual = actual.siguiente
 
-            # Revisamos la última posición
             if actual.clave == clave:
                 actual.valor = valor
             else:
@@ -98,7 +95,7 @@ class Mapa:
         actual_lista = inicio_lista
         while nodo_actual:
             nuevo_item = NodoLista()
-            # Se evitan las tuplas. Se pueden crear nodos para la clave y el valor por separado, o cualquier otra estructura personalizada.
+
             clave_valor_nodo = NodoMapa(nodo_actual.clave, nodo_actual.valor)
             nuevo_item.valor = clave_valor_nodo
             actual_lista.siguiente = nuevo_item
@@ -133,7 +130,7 @@ class Lista:
             nodo_actual.siguiente = nuevo_nodo
 
     def obtener(self, index):
-        # Verificar que el índice esté dentro del rango válido sin usar listas
+
         if not isinstance(index, int):
             raise TypeError("El índice debe ser un entero")
         tamano_lista = self.tamano()
@@ -148,13 +145,11 @@ class Lista:
             nodo_actual = nodo_actual.siguiente
             count += 1
         
-        # Aunque el índice debería estar dentro del rango si la verificación es correcta
-        # Incluimos esta línea por seguridad
         raise IndexError("Índice fuera de rango")
 
 
     def tamano(self):
-        # Implementa el método para contar el tamaño sin usar listas
+
         count = 0
         nodo_actual = self.inicio
         while nodo_actual:
@@ -175,7 +170,7 @@ class Lista:
             return valor
 
     def items(self):
-        # Crear una nueva lista personalizada sin usar estructuras nativas
+
         items_lista = Lista()
         nodo_actual = self.inicio
         while nodo_actual:
