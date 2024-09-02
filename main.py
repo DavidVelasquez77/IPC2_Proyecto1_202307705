@@ -248,7 +248,7 @@ class Menu:
                         g_mapping.agregar(Par(k, None), filas_grupo.obtener(0))
                         grupos.agregar(Par(k, None), filas_grupo)
 
-                # Crear el elemento de la matriz
+                # Crear el elemento de la matriz para el archivo XML
                 matriz_element = ET.SubElement(
                     root,
                     "matriz",
@@ -277,10 +277,10 @@ class Menu:
                         frecuencia_element.text = str(frecuencia)
                         self.console.print(f"[debug] Grupo {k}: g={g_valor}, Frecuencia {frecuencia}")
 
-                # Agregar la nueva matriz reducida a la lista
-                # Nota: Aquí necesitamos saber cómo se agrega una nueva matriz a la lista_matrices
-                # Por ahora, comentamos esta línea
-                # self.lista_matrices.agregar(matriz_reducida)
+                # Agregar la nueva matriz reducida a la lista_matrices
+                nombre_matriz_reducida = f"{matriz_original.nombre}_Salida"
+                self.lista_matrices.agregar(nombre_matriz_reducida, n_reducida, m_reducida, matriz_reducida)
+                self.console.print(f"[green]Matriz reducida '{nombre_matriz_reducida}' añadida a la lista circular.[/green]")
 
             actual = actual.siguiente
             if actual == self.lista_matrices.primero:
